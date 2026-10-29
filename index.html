@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Abhishek Kumar · Portfolio</title>
+  <meta name="description" content="Interactive hand-drawn 3D portfolio of Abhishek Kumar — Engineering Management student at Politecnico di Torino, data analyst, hackathon winner and student leader." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Gloria+Hallelujah&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✎</text></svg>" />
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <!-- SEO / accessibility fallback text -->
+  <article class="sr-only">
+    <h1>Abhishek Kumar — Engineering Management, Data & Product</h1>
+    <p>Master's student in Engineering Management at Politecnico di Torino with a B.Sc. in Computer Engineering. Technical Management Trainee at OpenSky VR Italia, Junior Data Analyst at Fibzio, President of the Politecnico Indian Students Association. Winner of the Therness and LOKI hackathons, 2nd at the Automation Hackathon.</p>
+  </article>
+
+  <!-- HUD -->
+  <div class="hud">
+    <button class="hud__btn is-hidden" id="btnBack" aria-label="Back to the corridor" title="back to corridor"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button>
+    <div class="hud__right">
+      <button class="hud__btn" id="btnMap" aria-label="Map" title="map"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+      <button class="hud__btn" id="btnAudio" aria-label="Toggle audio" title="sound"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z" /><path class="snd" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" /><path class="mute" d="M17 9l4 6M21 9l-4 6" /></svg></button>
+      <button class="hud__btn" id="btnAch" aria-label="Achievements" title="achievements"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 01-8 0V4zM8 6H5a3 3 0 003 3M16 6h3a3 3 0 01-3 3M12 13v4M8 21h8M9 17h6" /></svg></button>
+    </div>
+  </div>
+
+  <!-- entrance screen: name card, "come in" cue and three sticky facts (filled from data.js) -->
+  <section class="intro" id="intro" aria-label="Introduction">
+    <div class="intro__card">
+      <span class="intro__hello" id="introHello"></span>
+      <h1 class="intro__name" id="introName"></h1>
+      <p class="intro__role" id="introRole"></p>
+      <p class="intro__tag" id="introTag"></p>
+      <nav class="intro__links" id="introLinks" aria-label="Profiles"></nav>
+    </div>
+    <div class="intro__cue" id="introCue">
+      <span class="intro__cueText" id="introCueText"></span>
+      <svg class="intro__arrow" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 44 C 30 40, 60 10, 108 14" /><path d="M94 4 L110 14 L96 28" /></svg>
+    </div>
+    <div class="intro__stats" id="introStats"></div>
+  </section>
+
+  <!-- hint banner -->
+  <div class="hint" id="hint"><div class="hint__title"></div><div class="hint__text"></div></div>
+
+  <!-- map overlay -->
+  <div class="overlay" id="map">
+    <div class="sheet sheet--map">
+      <div class="sheet__head"><span>MAP</span><button class="sheet__x" id="mapClose" aria-label="Close">×</button></div>
+      <svg id="mapSvg" viewBox="0 0 520 480" class="mp"></svg>
+    </div>
+  </div>
+
+  <!-- achievements -->
+  <aside class="ach sheet" id="ach">
+    <div class="sheet__head"><span>ACHIEVEMENTS</span><button class="sheet__x" id="achClose" aria-label="Close">×</button></div>
+    <ul id="achList"></ul>
+    <div class="ach__bar" aria-hidden="true"><i id="achBar"></i></div>
+    <div class="ach__count" id="achCount"></div>
+  </aside>
+
+  <!-- project modal -->
+  <div class="overlay" id="modal">
+    <div class="sheet sheet--modal">
+      <button class="sheet__x" id="modalClose" aria-label="Close">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- paper tear -->
+  <div class="tear" id="tear">
+    <div class="tear__half tear__half--l">
+      <svg class="tear__crumple" aria-hidden="true"><filter id="crumpleL"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="4" seed="7"/><feDiffuseLighting lighting-color="#fff" surfaceScale="2.4"><feDistantLight azimuth="40" elevation="58"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(#crumpleL)"/></svg>
+      <svg class="tear__edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="" vector-effect="non-scaling-stroke"/></svg>
+    </div>
+    <div class="tear__half tear__half--r">
+      <svg class="tear__crumple" aria-hidden="true"><filter id="crumpleR"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="4" seed="7"/><feDiffuseLighting lighting-color="#fff" surfaceScale="2.4"><feDistantLight azimuth="40" elevation="58"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(#crumpleR)"/></svg>
+      <svg class="tear__edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="" vector-effect="non-scaling-stroke"/></svg>
+    </div>
+    <div class="tear__loader" id="tearLoader"><span class="tear__ring"></span><span class="tear__ring tear__ring--2"></span><span id="tearPct">0%</span></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="data.js"></script>
+  <script src="js/sketch.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/scenes/home.js"></script>
+  <script src="js/scenes/gallery.js"></script>
+  <script src="js/scenes/studio.js"></script>
+  <script src="js/scenes/about.js"></script>
+  <script src="js/scenes/contact.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
