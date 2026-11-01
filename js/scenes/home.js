@@ -155,8 +155,8 @@ SCENES.home = class extends CORE.BaseScene {
       if (u.state === "sit") { u.bark(); CORE.hint("SOFIA", "Woof! Sofia is up and about"); }
     };
     this.dog.userData.onHover = (on) => { if (on) CORE.hint("SOFIA", this.dog.userData.state === "sleep" ? "Sofia is asleep" : "Sofia, the German Shepherd · click her and she barks"); };
-    this.petCat = PETS.cat(); this.petCat.userData.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.25); this.add(this.petCat); this.interactives.push(this.petCat);
-    this.petCat.userData.onClick = () => { if (this.petCat.userData.state === "sleep") { CORE.hint("LUNA", "Luna is curled up asleep"); return; } CORE.sound("meow"); gsap.to(this.petCat.scale, { y: 2.1, duration: 0.15, yoyo: true, repeat: 1 }); };
+    this.petCat = PETS.cat(); this.petCat.userData.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.9); this.add(this.petCat); this.interactives.push(this.petCat);
+    this.petCat.userData.onClick = () => { if (this.petCat.userData.state === "sleep") { CORE.hint("LUNA", "Luna is curled up asleep"); return; } CORE.sound("meow"); gsap.to(this.petCat.position, { y: 0.2, duration: 0.15, yoyo: true, repeat: 1 }); };
     this.petCat.userData.onHover = (on) => { if (on) CORE.hint("LUNA", this.petCat.userData.state === "sleep" ? "Luna is asleep" : "Luna the cat · she follows your cursor"); };
 
     // sun, moon, clouds and a flapping flock
@@ -258,7 +258,7 @@ SCENES.home = class extends CORE.BaseScene {
     if (instant) {
       const out = (S) => Math.atan2(-(S.door[1] - S.inside[1]), S.door[0] - S.inside[0]); // facing out through the doorway
       if (on) { D.place(K.inside[0], K.inside[1], "sleep"); D.heading = out(K); C.place(H.inside[0], H.inside[1], "sleep", out(H)); }
-      else { D.place(2.7, 1.8, "sit"); D.heading = -Math.PI / 2; C.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.25); }
+      else { D.place(2.7, 1.8, "sit"); D.heading = -Math.PI / 2; C.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.9); }
       return;
     }
     if (on) {
@@ -266,7 +266,7 @@ SCENES.home = class extends CORE.BaseScene {
       setTimeout(() => C.go([H.door, H.inside], () => { C.state = "sleep"; C.face = Math.atan2(-(H.door[1] - H.inside[1]), H.door[0] - H.inside[0]); }), 900);
     } else {
       setTimeout(() => D.wake(K.door, K.out), 600);
-      setTimeout(() => C.go([H.door, this.catSpot], () => { C.state = "sit"; C.face = -Math.PI / 2 + 0.25; }), 1100);
+      setTimeout(() => C.go([H.door, this.catSpot], () => { C.state = "sit"; C.face = -Math.PI / 2 + 0.9; }), 1100);
     }
   }
 
