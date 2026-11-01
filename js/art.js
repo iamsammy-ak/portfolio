@@ -344,6 +344,13 @@ window.ART = (() => {
       p.stroke([[-s * 0.45, -s * 0.3], [0, s * 0.08], [s * 0.45, -s * 0.3]], false, { width: 2 });
       p.circle(s * 0.3, -s * 0.18, s * 0.08, { fill: C.coral, passes: 1 });
       p.text("@", 0, s * 0.45 + 10, { size: s * 0.5, color: C.blue });
+    } else if (kind === "code") {
+      p.rrect(-s * 0.46, -s * 0.36, s * 0.92, s * 0.66, 14, { fill: "#2f3a45" });
+      p.rect(-s * 0.46, -s * 0.36, s * 0.92, s * 0.1, { fill: "#e6e5e1", passes: 1 });
+      [[-s * 0.38, C.coral], [-s * 0.3, C.sun], [-s * 0.22, C.leaf]].forEach(([x, col]) => p.circle(x, -s * 0.31, 5, { fill: col, passes: 1 }));
+      p.text("</>", 0, s * 0.02, { size: s * 0.3, color: C.sun, font: "sans", weight: 800 });
+      p.line(-s * 0.3, s * 0.2, s * 0.06, s * 0.2, { passes: 1, ink: C.mint, width: 4 });
+      p.rrect(-s * 0.2, s * 0.36, s * 0.4, s * 0.1, 6, { fill: C.wood, passes: 1 });
     } else if (kind === "cv") {
       p.rect(-s * 0.32, -s * 0.45, s * 0.64, s * 0.9, { fill: "#fdfcf8" });
       p.circle(-s * 0.12, -s * 0.25, s * 0.1, { fill: C.sun, passes: 1 });
@@ -706,6 +713,133 @@ window.ART = (() => {
     return k;
   }
 
+
+  /* ---------- the Lab: a workshop with a rolodex of GitHub repos ---------- */
+  const LANG = { TypeScript: "#a9cfee", JavaScript: "#f8dc7e", Python: "#b6dfad", HTML: "#f6b3ad", CSS: "#cdb6ec", TSQL: "#f9c8a0", "C#": "#cdb6ec", Java: "#f9c8a0" };
+  const langColor = (l) => LANG[l] || "#9fd9d4";
+
+  function pegboard(w = 1024, h = 1024) {
+    const k = canvas(w, h), p = new Pen(k.g, { width: 2, jitter: 0.8 });
+    paper(k.g, w, h, { base: "#e9d3ad", grain: 0.05 });
+    for (let y = 32; y < h; y += 64) for (let x = 32; x < w; x += 64) {
+      k.g.fillStyle = "rgba(90,60,25,0.45)"; k.g.beginPath(); k.g.arc(x + R(-1, 1), y + R(-1, 1), 6, 0, TAU); k.g.fill();
+    }
+    p.rect(4, 4, w - 8, h - 8, { alpha: 0.4, ink: C.woodDark });
+    return k;
+  }
+
+  /* things hanging on the pegboard */
+  function tool(kind) {
+    const k = canvas(256, 512), p = new Pen(k.g, { width: 2.4, jitter: 1 });
+    p.circle(128, 24, 10, { fill: "#8a8a86", passes: 1 });
+    if (kind === "wrench") {
+      p.stroke([[112, 60], [144, 60], [140, 420], [116, 420]], true, { fill: "#c9cdd2" });
+      p.circle(128, 70, 40, { fill: "#c9cdd2" }); p.rect(116, 30, 24, 44, { fill: "#e9d3ad", passes: 1 });
+      p.circle(128, 440, 34, { fill: "#c9cdd2" }); p.circle(128, 440, 14, { fill: "#e9d3ad", passes: 1 });
+    } else if (kind === "ruler") {
+      p.rect(96, 50, 64, 440, { fill: C.sun });
+      for (let i = 0; i < 22; i++) p.line(96, 66 + i * 19, 96 + (i % 5 ? 16 : 30), 66 + i * 19, { passes: 1, width: 1.6 });
+    } else if (kind === "saw") {
+      p.stroke([[90, 60], [166, 60], [170, 170], [86, 170]], true, { fill: C.coral });
+      p.rrect(108, 84, 40, 50, 14, { fill: "#e9d3ad", passes: 1 });
+      p.stroke([[100, 170], [156, 170], [150, 470], [104, 470]], true, { fill: "#d6dbe0" });
+      for (let y = 190; y < 470; y += 16) p.line(104, y, 112, y + 8, { passes: 1, width: 1.4 });
+    } else {
+      p.stroke([[118, 40], [138, 40], [138, 380], [128, 420], [118, 380]], true, { fill: C.blue });
+      p.rect(112, 250, 32, 150, { fill: C.wood });
+    }
+    return k;
+  }
+
+  /* one repo = one index card. Coloured tab = main language. */
+  function repoCard(r, i = 0) {
+    const k = canvas(768, 500), p = new Pen(k.g, { width: 2.4, jitter: 1 });
+    const tint = langColor(r.language);
+    p.rrect(176, 8, 220, 64, 14, { fill: tint });
+    p.text(r.language || "notes", 286, 40, { size: 30, font: "hand", weight: 700, maxWidth: 190 });
+    p.rect(12, 52, 744, 436, { fill: "#fdfcf6" });
+    for (let y = 176; y < 470; y += 38) p.line(26, y, 742, y, { passes: 1, alpha: 0.35, width: 1.2, ink: "#7fa9c9" });
+    p.line(84, 60, 84, 482, { passes: 1, alpha: 0.5, width: 1.4, ink: C.coral });
+    [300, 468].forEach((x) => p.rrect(x - 22, 452, 44, 36, 12, { fill: "#efe7d6", passes: 1 }));
+    p.text(r.title, 110, 118, { size: 58, align: "left", maxWidth: r.live ? 470 : 620 });
+    if (r.live) {
+      p.g.save(); p.g.translate(668, 116); p.g.rotate(-0.18);
+      p.rrect(-62, -26, 124, 52, 10, { fill: "rgba(226,87,75,0.12)", ink: C.coral, width: 3 });
+      p.text("LIVE", 0, 2, { size: 30, font: "sans", weight: 800, color: C.coral });
+      p.g.restore();
+    }
+    p.paragraph(r.description || "No description yet. Open it to read the code.", 110, 168, 620, { size: 26, font: "sans", weight: 500, maxLines: 5, lh: 1.42, alpha: 0.85 });
+    const d = r.pushed ? new Date(r.pushed + "T12:00:00") : null;
+    const when = d ? d.toLocaleDateString("en-GB", { month: "short", year: "numeric" }) : "";
+    p.text(`★ ${r.stars ?? 0}`, 110, 424, { size: 26, font: "sans", weight: 700, align: "left", alpha: 0.7 });
+    p.text(when ? "updated " + when : "", 196, 422, { size: 32, font: "hand", weight: 700, align: "left", alpha: 0.8, color: C.blue });
+    p.text((r.topics || []).slice(0, 3).join("  ·  "), 740, 424, { size: 20, font: "sans", weight: 600, align: "right", alpha: 0.55, maxWidth: 290 });
+    p.text(String(i + 1).padStart(2, "0"), 46, 118, { size: 26, font: "sans", weight: 800, alpha: 0.35 });
+    return k;
+  }
+
+  /* the rolodex's base and side knobs, seen from the front */
+  function rolodexBase(caption) {
+    const k = canvas(1024, 600), p = new Pen(k.g, { width: 2.8, jitter: 1.1 });
+    p.stroke([[70, 170], [954, 170], [996, 560], [28, 560]], true, { fill: "#d7dde3", hatch: { spacing: 10, alpha: 0.12 } });
+    p.line(70, 200, 954, 200, { passes: 1, alpha: 0.35 });
+    p.rect(28, 552, 968, 34, { fill: "#b9c2cb" });
+    [[110, 150], [914, 150]].forEach(([x, y]) => { p.circle(x, y, 64, { fill: C.coral }); p.circle(x, y, 24, { fill: "#f2a39a", passes: 1 }); });
+    p.rrect(302, 330, 420, 100, 16, { fill: "#fdfcf6" });
+    p.text(caption, 512, 380, { size: 50, font: "hand", weight: 700, maxWidth: 380 });
+    return k;
+  }
+
+  /* sticky note with how many repos use each language */
+  function langNote(counts) {
+    const k = canvas(420, 420), p = new Pen(k.g, { width: 2, jitter: 0.9 });
+    p.stroke([[18, 30], [400, 22], [404, 400], [14, 406]], true, { fill: "#fff3b4" });
+    p.rect(150, 6, 120, 34, { fill: "rgba(255,255,255,0.6)", passes: 1, alpha: 0.4 });
+    p.text("what I write in", 210, 80, { size: 40, font: "hand", weight: 700 });
+    counts.slice(0, 6).forEach(([lang, n], i) => {
+      const y = 140 + i * 44;
+      p.rrect(44, y - 15, 30, 30, 8, { fill: langColor(lang), passes: 1 });
+      p.text(lang, 92, y, { size: 30, font: "hand", weight: 700, align: "left" });
+      p.text("×" + n, 370, y, { size: 30, font: "hand", weight: 700, align: "right", alpha: 0.7 });
+    });
+    return k;
+  }
+
+  /* ---------- the CV filing cabinet at the end of the corridor ---------- */
+  function cabinet(rows) {
+    const k = canvas(768, 1024), p = new Pen(k.g, { width: 3, jitter: 1.2 });
+    p.rect(30, 40, 708, 940, { fill: C.wood, hatch: { spacing: 14, angle: -0.2, alpha: 0.08 } });
+    p.rect(30, 40, 708, 36, { fill: C.woodDark });
+    p.rect(60, 976, 60, 40, { fill: C.woodDark }); p.rect(648, 976, 60, 40, { fill: C.woodDark });
+    const top = 110, gap = 22, hh = (840 - gap * (rows - 1)) / rows;
+    for (let i = 0; i < rows; i++) p.rect(66, top + i * (hh + gap), 636, hh, { fill: "#a87a49", alpha: 0.6 });
+    return k;
+  }
+
+  function drawer(role, tint, h = 0.25) {
+    const k = canvas(640, Math.round(640 * h)), p = new Pen(k.g, { width: 2.8, jitter: 1.1 });
+    const H = k.h;
+    p.rect(6, 6, 628, H - 12, { fill: "#e3c08f" });
+    p.rect(26, 22, 588, H - 44, { alpha: 0.35, width: 1.6, ink: C.woodDark });
+    const lw = 320, lh = Math.min(84, H * 0.36), ly = H * 0.26;
+    p.rect(160 - 8, ly - 8, lw + 16, lh + 16, { fill: "#e1c067" });
+    p.rect(160, ly, lw, lh, { fill: role ? "#fdfcf6" : "#efe6d4", passes: 1 });
+    p.rect(160, ly, 16, lh, { fill: tint, passes: 1 });
+    p.text(role || "empty", 160 + lw / 2 + 8, ly + lh / 2 + 2, { size: Math.min(48, lh * 0.64), font: "hand", weight: 700, maxWidth: lw - 40, alpha: role ? 1 : 0.35 });
+    p.rrect(250, Math.min(ly + lh + 24, H - 52), 140, 26, 13, { fill: "#e1c067" });
+    return k;
+  }
+
+  /* the paper that peeks out of a drawer when you hover it */
+  function folderPeek(tint) {
+    const k = canvas(512, 256), p = new Pen(k.g, { width: 2.4, jitter: 1 });
+    p.stroke([[40, 60], [200, 60], [222, 30], [330, 30], [350, 60], [472, 60], [472, 250], [40, 250]], true, { fill: C.cream });
+    p.rect(70, 92, 330, 158, { fill: "#fdfcf8" });
+    for (let i = 0; i < 4; i++) p.line(96, 124 + i * 28, 96 + R(160, 270), 124 + i * 28, { passes: 1, alpha: 0.55, width: 3, ink: i === 0 ? C.coral : undefined });
+    p.rect(222, 30, 108, 30, { fill: tint, passes: 1, alpha: 0.9 });
+    return k;
+  }
+
   /* ---------- contact ---------- */
   function lighthouse() {
     const k = canvas(512, 768), p = new Pen(k.g, { width: 2.4, jitter: 1 });
@@ -761,5 +895,6 @@ window.ART = (() => {
     signBoard, corridorDoor, endDoor, frameArt, avatar, avatarRig, title, sectionTitle, lamp, vent, sideTable, plant, pencil, mug, paperBall, planeSketch, arrow, doodle,
     cloud, cloudBig, skyline, railing, poster, monitor, balloon, island, medal, tag,
     lighthouse, boat, pier, signpost,
+    pegboard, tool, repoCard, rolodexBase, langNote, langColor, cabinet, drawer, folderPeek,
   };
 })();

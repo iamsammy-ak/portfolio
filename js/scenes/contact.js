@@ -32,7 +32,7 @@ SCENES.contact = class extends CORE.BaseScene {
       s.userData.base = [x, 1.15, z, Math.random() * 6];
       s.userData.onClick = () => {
         CORE.sound("click"); CORE.unlock("sociable");
-        if (m.url.startsWith("mailto:")) location.href = m.url; else window.open(m.url, "_blank", "noopener");
+        if (m.url === "#cv") CV.open(); else if (m.url.startsWith("mailto:")) location.href = m.url; else window.open(m.url, "_blank", "noopener");
       };
       s.userData.onHover = (on) => gsap.to(s.scale, { x: on ? 1.1 : 1, y: on ? 1.1 : 1, duration: 0.3 });
       this.add(s, true); this.posts.push(s);

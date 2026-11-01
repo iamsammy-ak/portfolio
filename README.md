@@ -40,8 +40,9 @@ Everything on the site is drawn procedurally on `<canvas>` in pencil and waterco
 | **The Gallery** | Projects and hackathons as posters pegged on a rooftop clothesline. Click one to inspect it. |
 | **The Office** | Floating screens, one per role. Drag to spin them around. |
 | **About** | A paper-plane flight through the clouds: skills as balloons, the journey as islands, awards as medals. |
+| **The Lab** | A workshop rolodex: every public GitHub repo is an index card, pulled live from the GitHub API. Scroll to flip, click the front card for details and links. |
 | **Contact** | A pier in the sea with signposts to GitHub, LinkedIn, email and my CV. |
-| **End of the corridor** | Opens the CV. |
+| **End of the corridor** | A filing cabinet, one drawer per CV. Pulling a drawer opens that CV in a folder on the page. |
 
 Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Director, Sky Walker, Sociable*. There is a map in the corner if you get lost.
 
@@ -52,9 +53,22 @@ Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Dir
 | Scroll or swipe up and down | Walk the corridor, fly through About |
 | Drag, trackpad swipe, `←` `→` | Look left and right in the corridor |
 | Drag or `←` `→` in Gallery / Office | Slide the clothesline, rotate the screens |
+| Scroll, drag or `↑` `↓` in the Lab | Flip the rolodex one card at a time |
 | Click, or `Enter` on a hovered thing | Open doors, posters, screens, signposts |
 
 ---
+
+## 📁 CVs for different roles
+
+The CV is read on the page itself, rendered with pdf.js inside a manila folder with one tab per version. The **CV** button in the top bar opens it from anywhere, and `#cv` links straight to it.
+
+To add a version, upload a PDF to `assets/cv/`, for example `Data-Analyst.pdf`. On the live site it appears automatically as a new drawer and tab named after the file. Replacing a PDF updates what visitors see. To give a version a nicer title, a note or a fixed order, list it under `cv.files` in `data.js`.
+
+## 🧪 Projects from GitHub
+
+The Lab asks the GitHub API for public repos on every visit and caches the answer for six hours, so a new repo shows up on its own. Forks are skipped. In `data.js` under `github` you can hide repos, pin a few to the front, and add nicer titles and notes. The `snapshot` there is only the offline fallback.
+
+Rooms have shareable links: `#gallery`, `#studio`, `#lab`, `#about`, `#contact`.
 
 ## 🏆 What hangs in the Gallery
 
@@ -103,7 +117,9 @@ data.js           ← all the content
 js/sketch.js      pencil-line drawing helpers (Pen) + three.js glue
 js/art.js         every drawing: bricks, planks, tree, cat, doors, posters, avatar…
 js/core.js        renderer, virtual scroll, raycasting, transitions, HUD
-js/scenes/*.js    home (entrance + corridor), gallery, studio, about, contact
+js/github.js      live repo list for the Lab (GitHub API + cache + snapshot)
+js/cv.js          the CV folder: finds PDFs, renders them with pdf.js
+js/scenes/*.js    home (entrance + corridor), gallery, studio, lab, about, contact
 ```
 
 ## Run it locally
@@ -119,7 +135,7 @@ Needs an internet connection for three.js, GSAP and Google Fonts.
 
 ## Make it yours
 
-Edit **`data.js`** only. Sections: `meta` (name, `hello`, `role`, `tagline`, links), `entrance` (sign, `cue`, the three sticky-note `stats`, door stickers), `corridor` (room signs, wall frames), `gallery.projects`, `studio.items`, `about`, `contact.methods`. Drop a new CV at `assets/Abhishek_Kumar_CV.pdf`.
+Edit **`data.js`** only. Sections: `meta` (name, `hello`, `role`, `tagline`, links), `entrance` (sign, `cue`, the three sticky-note `stats`, door stickers), `corridor` (room signs, wall frames), `gallery.projects`, `studio.items`, `github`, `cv`, `about`, `contact.methods`. Role-specific CVs go in `assets/cv/`.
 
 To change the colours, edit `SK.PAL` at the top of `js/sketch.js` and the matching variables in `:root` of `styles.css`.
 

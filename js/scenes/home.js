@@ -156,13 +156,57 @@ SCENES.home = class extends CORE.BaseScene {
     const table = plane(T.sideTable(), 1.2); table.position.set(-1.85, 0.6, -27); this.add(table);
     const pl = plane(T.plant(), 0.75); pl.position.set(1.95, 0.6, -52); this.add(pl);
 
-    // the door at the very end → CV
-    const end = plane(T.endDoor("cv"), 2.6, 2.9); end.position.set(0, 1.45, -L + 0.03);
-    end.userData.onClick = () => { CORE.sound("click"); window.open(D.meta.links.cv, "_blank"); };
-    end.userData.onHover = (on) => gsap.to(end.scale, { x: on ? 1.03 : 1, y: on ? 1.03 : 1, duration: 0.3 });
-    this.add(end, true);
-    const es = plane(T.signBoard(D.corridor.endDoor.label), 1.3); es.position.set(0, 3.28, -L + 0.03); this.add(es);
+    // the end of the corridor: a filing cabinet with one drawer per CV
+    const es = plane(T.signBoard(D.corridor.endDoor.label, D.corridor.endDoor.sub), 1.5); es.position.set(0, 3.22, -L + 0.03); this.add(es);
+    this.cabinetZ = -L + 0.05;
+    CV.list().then((files) => { if (!this.disposed) this.buildCabinet(files); });
   }
+
+  /* drawers slide out on hover with the folder peeking up; click pulls one
+     all the way out and opens that CV in the folder viewer */
+  buildCabinet(files) {
+    const { plane } = SK, T = ART, z0 = this.cabinetZ;
+    const tints = ["#fbe8b5", "#d6e6f7", "#d4ecd2", "#f9d5d3"];
+    const shown = files.slice(0, 4), rows = Math.max(3, shown.length);
+    const W = 2.1, k = W / 768, H = 1024 * k, cy = H / 2;
+    const cab = plane(T.cabinet(rows), W, H); cab.position.set(0, cy, z0); this.add(cab);
+    const gap = 22, hh = (840 - gap * (rows - 1)) / rows;
+    this.drawers = [];
+    // empty drawers below the real ones keep the cabinet looking like a cabinet
+    for (let i = shown.length; i < rows; i++) {
+      const ypx = 110 + i * (hh + gap) + hh / 2;
+      const d = plane(T.drawer("", "#e9e2d5", Math.min(0.6, hh / 636)), 636 * k, hh * k); d.position.set(0, cy + (512 - ypx) * k, z0 + 0.04); this.add(d);
+    }
+    shown.forEach((f, i) => {
+      const more = i === 3 && files.length > 4;
+      const label = more ? `+${files.length - 3} more` : f.role;
+      const ypx = 110 + i * (hh + gap) + hh / 2;
+      const y = cy + (512 - ypx) * k, dh = hh * k;
+      const grp = new THREE.Group(); grp.position.set(0, y, z0 + 0.02); this.add(grp);
+      const peek = plane(T.folderPeek(tints[i % 4]), 1.2); peek.position.set(0, dh / 2 - 0.32, -0.01); grp.add(peek);
+      const front = plane(T.drawer(label, tints[i % 4], Math.min(0.6, hh / 636)), 636 * k, dh); front.position.z = 0.02; grp.add(front);
+      let pulling = false;
+      front.userData.onHover = (on) => {
+        if (pulling) return;
+        gsap.to(grp.position, { z: z0 + 0.02 + (on ? 0.32 : 0), duration: 0.45, ease: "power3.out" });
+        gsap.to(peek.position, { y: dh / 2 - 0.32 + (on ? 0.42 : 0), duration: 0.5, ease: "back.out(1.6)" });
+        gsap.to(front.material.color, { ...new THREE.Color(on ? "#fff4dc" : "#ffffff"), duration: 0.3 });
+        if (on) CORE.sound("click");
+      };
+      front.userData.onClick = () => {
+        if (pulling || this.app.busy) return; pulling = true;
+        CORE.sound("door");
+        gsap.to(grp.position, { z: z0 + 0.75, duration: 0.5, ease: "power2.out" });
+        gsap.to(peek.position, { y: dh / 2 + 0.55, duration: 0.5, ease: "power2.out" });
+        setTimeout(() => CV.open(f.id), 280);
+        setTimeout(() => { pulling = false; front.userData.onHover(false); }, 1200);
+      };
+      this.interactives.push(front);
+      this.drawers.push(grp);
+    });
+  }
+
+  dispose() { this.disposed = true; super.dispose(); }
 
   enter() {
     if (this.entered) return;
@@ -202,6 +246,7 @@ SCENES.home = class extends CORE.BaseScene {
     this.yaw.v = lerp(this.yaw.v, this.yaw.t, 1 - Math.pow(0.004, dt));
     cam.rotation.x += out * 0.2; cam.rotation.y += this.turn.y + this.yaw.v;
     if (p > 0.18) CORE.unlock("wanderer");
+    if (p > 0.9 && !this.cvHinted) { this.cvHinted = true; CORE.hint("MY CV", "Pull a drawer to read a version of my CV · or press the <b>CV</b> button any time", 6000); }
     this.skyBits.forEach((b) => { if (b.userData.sp) { b.position.x += b.userData.sp * dt; if (b.position.x > 16) b.position.x = -16; } if (b.userData.spin) b.rotation.z += dt * b.userData.spin; if (b.userData.ph !== undefined) b.position.y += Math.sin(t * 3 + b.userData.ph) * 0.002; });
     // things near the entrance fade out as you walk through them
     this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = 1 - smooth(-1.0, 0.4, d); });

@@ -151,7 +151,8 @@ window.CORE = (() => {
     $("#introRole").textContent = m.role || m.title;
     $("#introTag").textContent = m.tagline || "";
     const links = [["LinkedIn", m.links.linkedin], ["GitHub", m.links.github], ["CV", m.links.cv]].filter(([, u]) => u);
-    $("#introLinks").innerHTML = links.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l} <span aria-hidden="true">↗</span></a>`).join("");
+    $("#introLinks").innerHTML = links.map(([l, u]) => l === "CV" ? `<a href="#cv" data-cv>CV <span aria-hidden="true">↗</span></a>` : `<a href="${u}" target="_blank" rel="noopener">${l} <span aria-hidden="true">↗</span></a>`).join("");
+    $("#introLinks [data-cv]")?.addEventListener("click", (e) => { e.preventDefault(); CV.open(); });
     $("#introCueText").textContent = e.cue || "click the door to come in";
     $("#introStats").innerHTML = (e.stats || []).map((s) => `<div class="intro__stat"><b>${s.big}</b><small>${s.small}</small></div>`).join("");
   }
@@ -165,27 +166,28 @@ window.CORE = (() => {
       screens: `<rect x="-20" y="-24" width="30" height="18" rx="2"/><rect x="-6" y="-8" width="30" height="18" rx="2"/><rect x="-24" y="4" width="28" height="18" rx="2"/>`,
       plane: `<path d="M-28 6 L26 -20 L4 14 L-2 4 Z M-2 4 L26 -20" /><path d="M-30 20 q10 -8 20 0 q10 8 20 0" />`,
       mail: `<path d="M-28 -10 L28 -10 L28 14 L-28 14 Z M-28 -10 L0 8 L28 -10" /><path d="M-30 20 q10 -6 20 0 q10 6 20 0" />`,
+      code: `<rect x="-28" y="-20" width="56" height="36" rx="4"/><path d="M-10 -8 L-18 -1 L-10 6 M10 -8 L18 -1 L10 6 M4 -11 L-4 9" />`,
     };
     let s = `<rect class="mp__floor" x="250" y="90" width="28" height="330" /><g class="mp__line"><path d="M250 420 L250 90" /><path d="M250 420 L250 90" transform="translate(28 0)" /></g>`;
-    s += `<g class="mp__end" transform="translate(264 60)"><rect x="-24" y="-28" width="48" height="56"/><path d="M0 -28 L0 28 M-18 2 L-10 2 M10 2 L18 2"/><text y="-38" class="mp__inf">∞</text></g>`;
+    s += `<g class="mp__end" transform="translate(264 60)"><rect x="-24" y="-28" width="48" height="56"/><path d="M-24 -9 L24 -9 M-24 10 L24 10 M-6 -19 L6 -19 M-6 0 L6 0 M-6 19 L6 19"/><text y="-38" class="mp__inf">my CVs</text></g>`;
     rooms.forEach((r) => {
-      const y = 380 + (r.z / 50) * 290, left = r.side === "left";
+      const y = 400 + (r.z / 50) * 300, left = r.side === "left";
       const bx = left ? 232 : 282;
       s += `<g class="mp__room" data-room="${r.id}" transform="translate(${bx} ${y})"><rect x="-16" y="-16" width="32" height="32"/></g>`;
-      const ix = left ? 120 : 400;
-      s += `<g class="mp__icon" transform="translate(${ix} ${y - 10})">${icons[r.icon] || ""}</g>`;
-      s += `<text class="mp__label" x="${ix}" y="${y + 36}" text-anchor="middle">${r.label}</text>`;
+      const ix = left ? 186 : 342;
+      s += `<g class="mp__icon" transform="translate(${ix} ${y}) scale(0.8)">${icons[r.icon] || ""}</g>`;
+      s += `<text class="mp__label" x="${left ? ix - 34 : ix + 34}" y="${y + 6}" text-anchor="${left ? "end" : "start"}">${r.label}</text>`;
     });
     s += `<g class="mp__pin" id="mapPin"><circle r="14" class="mp__pinring"/><path class="mp__pinbody" d="M0 -4 l-6 -14 l12 0 z M-5 -18 l10 0 M0 -4 l0 10" /><text class="mp__you" x="20" y="-10">you are here</text></g>`;
     svg.innerHTML = s;
     svg.querySelectorAll(".mp__room").forEach((g) => g.addEventListener("click", () => { closeMap(); go(g.dataset.room); }));
-    svg.querySelector(".mp__end").addEventListener("click", () => { closeMap(); go("home", { inside: true }); });
+    svg.querySelector(".mp__end").addEventListener("click", () => { closeMap(); CV.open(); });
   }
   function setPin(name) {
     const pin = $("#mapPin"); if (!pin) return;
     const r = D.corridor.rooms.find((x) => x.id === name);
     if (!r) { pin.setAttribute("transform", "translate(264 440)"); return; }
-    const y = 380 + (r.z / 50) * 290, bx = r.side === "left" ? 232 : 282;
+    const y = 400 + (r.z / 50) * 300, bx = r.side === "left" ? 232 : 282;
     pin.setAttribute("transform", `translate(${bx} ${y + 2})`);
   }
   const openMap = () => { $("#map").classList.add("is-on"); sound("click"); };
@@ -201,7 +203,7 @@ window.CORE = (() => {
       ${item.summary ? `<p class="modal__sum">${item.summary}</p>` : ""}
       ${item.bullets?.length ? `<ul>${item.bullets.map((b) => `<li>${b}</li>`).join("")}</ul>` : ""}
       ${item.tags?.length ? `<p class="modal__tags">${item.tags.map((t) => `<span>${t}</span>`).join("")}</p>` : ""}
-      ${item.link ? `<a class="modal__link" href="${item.link}" target="_blank" rel="noopener">Open project ↗</a>` : ""}`;
+      ${(item.links || (item.link ? [{ label: "Open project", url: item.link }] : [])).length ? `<p class="modal__links">${(item.links || [{ label: "Open project", url: item.link }]).map((l, i) => `<a class="modal__link${i === 0 ? " is-main" : ""}" href="${l.url}" target="_blank" rel="noopener">${l.label} ↗</a>`).join("")}</p>` : ""}`;
     m.classList.add("is-on"); sound("pop");
   }
   const closeModal = () => $("#modal").classList.remove("is-on");
@@ -241,7 +243,7 @@ window.CORE = (() => {
   function bindInput() {
     const c = app.renderer.domElement;
     addEventListener("wheel", (e) => {
-      if (!app.current || app.busy || $("#modal").classList.contains("is-on") || $("#map").classList.contains("is-on")) return;
+      if (!app.current || app.busy || CV.isOpen || $("#modal").classList.contains("is-on") || $("#map").classList.contains("is-on")) return;
       const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? app.h : 1;
       const dy = e.deltaY * k, dx = e.deltaX * k;
       // sideways trackpad swipes: look around in the corridor, slide the clothesline in the gallery
@@ -274,8 +276,9 @@ window.CORE = (() => {
       }
     });
     addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") app.scroll.target += 120;
-      if (e.key === "ArrowUp" || e.key === "PageUp") app.scroll.target -= 120;
+      if (CV.isOpen || e.target.closest?.("input, textarea")) return;
+      const step = { ArrowDown: 1, PageDown: 1, " ": 1, ArrowUp: -1, PageUp: -1 }[e.key];
+      if (step) { if (app.current?.onStep) app.current.onStep(step); else app.scroll.target += step * 120; }
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") { const d = e.key === "ArrowLeft" ? -1 : 1; if (app.current?.onArrow) app.current.onArrow(d); else app.scroll.target += d * 160; }
       if (e.key === "Enter" && app.current?.hovered?.userData.onClick) app.current.hovered.userData.onClick();
       if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); }
@@ -286,6 +289,7 @@ window.CORE = (() => {
       app.current?.resize(app.w, app.h);
     });
     $("#btnMap").addEventListener("click", openMap);
+    $("#btnCV").addEventListener("click", () => CV.open());
     $("#mapClose").addEventListener("click", closeMap);
     $("#btnBack").addEventListener("click", () => go("home", { inside: true }));
     $("#btnAudio").addEventListener("click", () => { setAudio(!app.audio); sound("click"); });
@@ -327,6 +331,8 @@ window.CORE = (() => {
     app.renderer.setSize(app.w, app.h);
     app.renderer.outputColorSpace = THREE.SRGBColorSpace;
     bindInput(); buildIntro(); buildMap(); renderAch(); setAudio(app.audio);
+    GH.refresh();
+    const want = location.hash.slice(1);
     await TEAR.load(async () => {
       await document.fonts.ready;
       await Promise.all(["700 20px 'Gloria Hallelujah'", "700 20px 'Caveat'", "600 20px 'Inter'"].map((f) => document.fonts.load(f).catch(() => {})));
@@ -336,6 +342,9 @@ window.CORE = (() => {
     await TEAR.open();
     app.busy = false;
     app.current.onEnter?.();
+    // shared links: #lab, #gallery … open that room, #cv opens the CV folder
+    if (want === "cv") CV.open();
+    else if (SCENES[want] && want !== "home") go(want);
   }
 
   return { app, BaseScene, go, hint, unlock, sound, modal, boot };
