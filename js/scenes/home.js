@@ -60,8 +60,9 @@ SCENES.home = class extends CORE.BaseScene {
     const dome = (top, mid, bottom) => new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.MeshBasicMaterial({ map: SK.gradientTex(top, bottom, mid), side: THREE.BackSide, fog: false, depthWrite: false, transparent: true }));
     this.skyDay = dome("#7fb3df", "#bcd8ee", "#eef2f0"); this.skyDay.position.y = 2; this.add(this.skyDay);
     this.skyNight = dome("#0b1430", "#1f2d58", "#3a3f6a"); this.skyNight.position.y = 2; this.skyNight.scale.setScalar(0.99); this.skyNight.material.opacity = 0; this.add(this.skyNight);
+    this.skyDay.renderOrder = -20; this.skyNight.renderOrder = -19;
     this.scene.background = new THREE.Color("#bcd8ee");
-    const st = plane(T.stars(), 220, 90, { fog: false }); st.position.set(0, 40, -88); st.material.opacity = 0; this.add(st); N.fadeIn.push(st);
+    const st = plane(T.stars(), 160, 60, { fog: false }); st.position.set(0, 30, -60); st.material.opacity = 0; st.material.depthWrite = false; st.renderOrder = -18; this.add(st); N.fadeIn.push(st);
     flat(T.turinSkyline(), 230, 50, [0, 12, -78], [0, 0, 0], { fog: false });
 
     // ground: lawn, a stone pavement along the house, the path to the door
@@ -134,14 +135,21 @@ SCENES.home = class extends CORE.BaseScene {
       const sh = plane(T.glow("30,50,20", 128), h * 0.7, h * 0.35); sh.rotation.x = -Math.PI / 2; sh.position.set(x + 0.4, 0.02, z + 0.3); sh.material.opacity = 0.35; this.add(sh);
     });
     [[-8.6, 0.9, "#5f8f45"], [-3.6, 0.9, "#6c9c4c"], [7.4, 0.9, "#5f8f45"], [-12, 4, "#4e7e3c"], [9.4, 3.6, "#6c9c4c"]].forEach(([x, z, c], i) => flat(T.shrub(c), 1.3 + (i % 2) * 0.4, 1.0 + (i % 2) * 0.25, [x, 0.5 + (i % 2) * 0.12, z]));
-    const deco = (k, w, x, y, h, z) => { const m = plane(k, w, h); m.position.set(x, y, z); this.add(m); N.shade.push(m.material); return m; };
-    this.cat = deco(T.cat(), 0.8, -2.0, 0.6, undefined, 0.55);
+    // Sofia the German Shepherd paces by the door; the cat sits and watches you. Real 3D, toon-lit.
+    this.hemi = new THREE.HemisphereLight("#fff6e8", "#6b7d5a", 1.15); this.scene.add(this.hemi);
+    this.sunLight = new THREE.DirectionalLight("#ffffff", 1.1); this.sunLight.position.set(4, 9, 7); this.scene.add(this.sunLight);
+    this.dog = PETS.dog("Sofia"); this.add(this.dog); this.interactives.push(this.dog);
+    this.dog.userData.onClick = () => { CORE.sound("woof"); gsap.to(this.dog.position, { y: 0.3, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }); this.dog.userData.state = "idle"; this.dog.userData.timer = 2.5; };
+    this.dog.userData.onHover = (on) => { if (on) CORE.hint("SOFIA", "Sofia, the German Shepherd · click to say hi"); };
+    this.petCat = PETS.cat(); this.petCat.position.set(-2.15, 0.0, 1.55); this.petCat.rotation.y = -Math.PI / 2 + 0.25; this.add(this.petCat); this.interactives.push(this.petCat);
+    this.petCat.userData.onClick = () => { CORE.sound("meow"); gsap.to(this.petCat.scale, { y: 1.4, duration: 0.15, yoyo: true, repeat: 1 }); };
+    this.petCat.userData.onHover = (on) => { if (on) CORE.hint("THE CAT", "Click the cat · it follows your cursor"); };
 
     // sun, moon, clouds and a flapping flock
-    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(12.5, 9.6, -6); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
-    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(12.5, 9.6, -6.05); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
+    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(3.2, 12.9, -6); sunM.scale.setScalar(0.85); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
+    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(3.2, 12.9, -6.05); moonM.scale.setScalar(0.8); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
     const ck = [T.cloud(), T.cloud(), T.cloud()];
-    for (let i = 0; i < 9; i++) { const c = plane(ck[i % 3], 3 + Math.random() * 3, undefined, { fog: false }); c.position.set(-26 + i * 6.5 + Math.random() * 3, 12 + Math.random() * 6, -10 - (i % 3) * 3); c.userData.sp = 0.12 + Math.random() * 0.15; this.add(c); this.skyBits.push(c); N.fadeOut.push(c); }
+    for (let i = 0; i < 9; i++) { const c = plane(ck[i % 3], 3 + Math.random() * 3, undefined, { fog: false }); c.position.set(-26 + i * 6.5 + Math.random() * 3, 13.6 + Math.random() * 2.4, -8 - (i % 3) * 2); c.userData.sp = 0.12 + Math.random() * 0.15; this.add(c); this.skyBits.push(c); N.fadeOut.push(c); }
     this.flock = [];
     const up = tex(T.birdPose(true)), down = tex(T.birdPose(false));
     for (let i = 0; i < 7; i++) {
@@ -150,7 +158,7 @@ SCENES.home = class extends CORE.BaseScene {
       b.userData = { off: [i ? sideOff * row * 0.8 : 0, -row * 0.35], ph: Math.random() * 6, up, down };
       this.add(b); this.flock.push(b); N.fadeOut.push(b);
     }
-    this.flockPos = { x: -30, y: 11.4, z: -7 };
+    this.flockPos = { x: -30, y: 13.2, z: -6 };
 
     // a farewell sign at the end of the path, framed by the doorway as you leave
     const bye = flat(T.farewellSign(D.meta.name.split(" ")[0]), 3.4, 2.12, [0, 1.06, 12.5], [0, Math.PI, 0]);
@@ -241,6 +249,7 @@ SCENES.home = class extends CORE.BaseScene {
         N.fadeIn.forEach((m) => (m.material.opacity = (m.userData.dayOpacity || 0) + (1 - (m.userData.dayOpacity || 0)) * k.v));
         N.fadeOut.forEach((m) => (m.material.opacity = 1 - k.v));
         this.skyNight.material.opacity = k.v;
+        if (this.hemi) { this.hemi.intensity = 1.15 - k.v * 0.65; this.sunLight.intensity = 1.1 - k.v * 0.85; this.hemi.color.set(k.v > 0.5 ? "#aeb8e6" : "#fff6e8"); }
         this.lampGlow.material.opacity = k.v; this.lampPool.material.opacity = k.v * 0.8;
         this.lampBulb.material.color.set(k.v > 0.5 ? "#fff3c4" : "#f3efe2");
         if (!this.entered) this.scene.fog.color.copy(fogDay).lerp(fogNight, k.v);
@@ -564,6 +573,8 @@ SCENES.home = class extends CORE.BaseScene {
     this.lastScroll = this.app.scroll.v;
     cam.position.z = z;
     cam.position.x = this.camX.v;
+    // a slightly wider lens outside so the front garden and its pets fit
+    const fov = 55 + smooth(0.5, 9.5, z) * 7; if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
     this.outsideGroup.visible = !this.entered || z > -6 || Math.cos(this.yaw.v) < 0.35;
     if (this.lampPulse && z > 0) { const k = 1 - this.night; this.lampPulse.material.opacity = (0.25 + Math.sin(t * 2.4) * 0.2) * k; this.lampPulse.scale.setScalar(1.1 + Math.sin(t * 2.4) * 0.25); this.lampTagM.rotation.z = -0.06 + Math.sin(t * 1.3) * 0.04; }
     if (this.sign) this.sign.rotation.x = Math.sin(t * 0.9) * 0.035;
@@ -584,9 +595,10 @@ SCENES.home = class extends CORE.BaseScene {
     if (z > -3) {
       this.skyBits.forEach((b) => { if (b.userData.sp) { b.position.x += b.userData.sp * dt; if (b.position.x > 32) b.position.x = -32; } if (b.userData.spin) b.rotation.z += dt * b.userData.spin; });
       // a small flock flaps across the sky in a loose V
-      const F = this.flockPos; F.x += dt * 1.6; F.y += Math.sin(t * 0.5) * 0.004; if (F.x > 34) { F.x = -34; F.y = 11.5 + Math.random() * 3; }
+      const F = this.flockPos; F.x += dt * 1.6; F.y += Math.sin(t * 0.5) * 0.004; if (F.x > 34) { F.x = -34; F.y = 12.8 + Math.random() * 1.5; }
       this.flock.forEach((b) => { const u = b.userData; b.position.set(F.x + u.off[1] * 1.6, F.y + Math.abs(u.off[0]) * 0.25 + Math.sin(t * 2 + u.ph) * 0.06, F.z + u.off[0]); const flap = Math.sin(t * 9 + u.ph) > 0; b.material.map = flap ? u.up : u.down; b.lookAt(cam.position); });
-      if (this.cat) this.cat.rotation.z = Math.sin(t * 0.8) * 0.01;
+      const ctx = { cam: cam.position, pointer: this.app.pointer, minX: 1.9, maxX: 4.3 };
+      this.dog.userData.tick(t, dt, ctx); this.petCat.userData.tick(t, dt, ctx);
     }
     // things near the entrance fade out as you walk through them
     // …and the big name steps aside when you turn to look at the walls

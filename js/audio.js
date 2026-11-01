@@ -81,6 +81,24 @@ window.AUDIO = (() => {
     whoosh(t) { FX.tear(t); },
     unlock(t) { [784, 1175, 1568].forEach((f, i) => { osc("sine", f, t + i * 0.09, 0.9, 0.05, wet.input); osc("sine", f, t + i * 0.09, 0.5, 0.035, sfxBus); }); },
     open(t) { noiseHit(t, 0.25, 0.08, "bandpass", 1800, 0.8); osc("sine", 300, t, 0.2, 0.03, wet.input); },
+    // Sofia: two short barks; the cat: a rising-falling meow
+    woof(t) {
+      [0, 0.24].forEach((d) => {
+        const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        o.type = "sawtooth"; o.frequency.setValueAtTime(260, t + d); o.frequency.exponentialRampToValueAtTime(150, t + d + 0.16);
+        f.type = "bandpass"; f.frequency.value = 700; f.Q.value = 2.5; o.connect(f); f.connect(g); g.connect(sfxBus); g.connect(wet.input);
+        env(g, t + d, 0.01, 0.22, 0.16); o.start(t + d); o.stop(t + d + 0.25);
+        noiseHit(t + d, 0.1, 0.12, "bandpass", 900, 1.5);
+      });
+    },
+    meow(t) {
+      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(520, t); o.frequency.linearRampToValueAtTime(820, t + 0.25); o.frequency.linearRampToValueAtTime(480, t + 0.7);
+      lfo.frequency.value = 7; lg.gain.value = 12; lfo.connect(lg); lg.connect(o.frequency);
+      f.type = "bandpass"; f.frequency.setValueAtTime(900, t); f.frequency.linearRampToValueAtTime(1600, t + 0.3); f.frequency.linearRampToValueAtTime(800, t + 0.7); f.Q.value = 3;
+      o.connect(f); f.connect(g); g.connect(sfxBus); g.connect(wet.input); env(g, t, 0.06, 0.12, 0.65);
+      o.start(t); lfo.start(t); o.stop(t + 0.8); lfo.stop(t + 0.8);
+    },
     night(t) { osc("square", 2200, t, 0.015, 0.04, sfxBus); [880, 660, 523].forEach((f, i) => osc("sine", f, t + 0.06 + i * 0.11, 0.8, 0.04, wet.input)); },
     day(t) { osc("square", 2200, t, 0.015, 0.04, sfxBus); [523, 660, 880].forEach((f, i) => osc("sine", f, t + 0.06 + i * 0.11, 0.8, 0.04, wet.input)); },
   };

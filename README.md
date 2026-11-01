@@ -65,6 +65,7 @@ The original brick house, rebuilt from 3D parts. It has a tiled pitched roof wit
 
 - **Click the street lamp** to switch between day and night. Night brings a moon, stars and lit windows, and the choice is remembered.
 - **Click the mailbox** to go straight to Contact.
+- **Sofia**, a German Shepherd, paces by the door and stops to look at you. Click her and she barks. The cat sits by the mailbox and follows your cursor. Both are real 3D models with cartoon shading.
 
 ## 🖼️ The corridor is a small museum
 
@@ -166,6 +167,7 @@ data.js           ← all the content
 js/sketch.js      pencil-line drawing helpers (Pen) + three.js glue
 js/art.js         every drawing: planks, doors, posters, paintings, graffiti, avatar…
 js/art-house.js   house materials, garden, Turin skyline, moon, stars, birds
+js/pets.js        Sofia the German Shepherd and the cat, in 3D
 js/audio.js       generated music and sound effects
 js/core.js        renderer, virtual scroll, raycasting, transitions, HUD
 js/github.js      live repo list for the Lab (GitHub API + cache + snapshot)
