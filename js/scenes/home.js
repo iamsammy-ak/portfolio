@@ -608,7 +608,7 @@ SCENES.home = class extends CORE.BaseScene {
     cam.position.z = z;
     cam.position.x = this.camX.v;
     // a slightly wider lens outside so the front garden and its pets fit
-    const fov = 55 + smooth(0.5, 9.5, z) * 7; if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
+    const fov = SK.fovFor(55 + smooth(0.5, 9.5, z) * 7, cam.aspect); if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
     this.outsideGroup.visible = !this.entered || z > -6 || Math.cos(this.yaw.v) < 0.35;
     if (this.lampPulse && z > 0) { const k = 1 - this.night; this.lampPulse.material.opacity = (0.25 + Math.sin(t * 2.4) * 0.2) * k; this.lampPulse.scale.setScalar(1.1 + Math.sin(t * 2.4) * 0.25); this.lampTagM.rotation.z = -0.06 + Math.sin(t * 1.3) * 0.04; }
     if (this.sign) this.sign.rotation.x = Math.sin(t * 0.9) * 0.035;

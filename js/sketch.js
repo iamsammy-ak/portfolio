@@ -231,10 +231,12 @@ window.SK = (() => {
     return t;
   }
   const lerp = (a, b, t) => a + (b - a) * t;
+  /* vertical field of view for an aspect ratio: on portrait phones the lens widens so walls, doors and the house still fit */
+  const fovFor = (base, aspect) => (aspect >= 1 ? base : Math.min(84, base / Math.pow(aspect, 0.55)));
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 
-  return { R, TAU, INK, PAL, canvas, paper, Pen, tex, plane, gradientTex, lerp, clamp, smooth };
+  return { R, TAU, INK, PAL, canvas, paper, Pen, tex, plane, gradientTex, lerp, clamp, smooth, fovFor };
 })();
 
 /* image loader shared by the museum walls (cached, so a painting loads once) */

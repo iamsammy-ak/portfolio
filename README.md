@@ -59,6 +59,17 @@ Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Dir
 
 ---
 
+## 📱 On a phone
+
+The whole site works on touch screens.
+
+- **Swipe up or down** to walk. **Swipe sideways** to look around. Each swipe locks to one direction, so walking never twists the view.
+- **Tap** doors, posters, screens, drawers, the lamp, the mailbox and the pets.
+- On tall screens the lens widens so the house, the corridor walls and every room fit.
+- Panels such as the CV folder, the one-page summary, the map and the sound settings reflow for small screens and keep clear of the notch.
+- Hints say tap and swipe instead of click and scroll.
+- Rendering is lighter on phones so it stays smooth and cool.
+
 ## 🏡 Outside
 
 The original brick house, rebuilt from 3D parts. It has a tiled pitched roof with a chimney, stone corners, a plinth and a cornice, and a stone door surround with a step. The recessed windows have white frames, green shutters and coral curtains, and there's a flower box. The PORTFOLIO sign hangs on chains and sways. Bunting, the tree, the cat and Turin on the hills complete the street.

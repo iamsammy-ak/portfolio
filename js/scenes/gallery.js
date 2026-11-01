@@ -66,5 +66,8 @@ SCENES.gallery = class extends CORE.BaseScene {
     });
     this.clouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > 22) c.position.x = -22; });
     this.parallax(dt, 0.04);
+    // on a tall phone screen look up at the line instead of the floor
+    if (this.camera.aspect < 1) this.camera.rotation.x += 0.2;
   }
+  resize(w, h) { super.resize(w, h); this.camera.position.z = w / h < 1 ? 5.4 : 7; }
 };

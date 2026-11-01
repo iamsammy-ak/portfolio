@@ -5,6 +5,12 @@ window.CORE = (() => {
   const { clamp, lerp } = SK;
   const $ = (s) => document.querySelector(s);
 
+  const isTouch = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+  document.documentElement.classList.toggle("is-touch", isTouch);
+  const touchWords = (s) => !isTouch ? s : String(s)
+    .replace(/<b>drag<\/b> or <b>A D<\/b> to (turn all the way round|look around)/g, "<b>swipe sideways</b> to look around")
+    .replace(/\bScroll or drag\b/g, "Swipe").replace(/\bDrag or scroll\b/g, "Swipe").replace(/\bScroll\b/g, "Swipe").replace(/\bscroll\b/g, "swipe")
+    .replace(/\bClick\b/g, "Tap").replace(/\bclick\b/g, "tap").replace(/\bDrag\b/g, "Swipe").replace(/\bdrag\b/g, "swipe");
   const app = {
     D, renderer: null, current: null, busy: false, started: false,
     scroll: { v: 0, target: 0 },
@@ -45,7 +51,10 @@ window.CORE = (() => {
       if (obj?.userData.onHover) obj.userData.onHover(true);
       document.body.classList.toggle("is-pointer", !!obj);
     }
-    resize(w, h) { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+    resize(w, h) {
+      if (this._baseFov === undefined) this._baseFov = this.camera.fov;
+      this.camera.aspect = w / h; this.camera.fov = SK.fovFor(this._baseFov, w / h); this.camera.updateProjectionMatrix();
+    }
     /* night: tint every surface, swap the sky, light up the stars. Scenes can
        set outdoor, nightTint, nightBg and nightSkip (a Set of materials to leave alone). */
     applyNight(on, instant) {
@@ -138,7 +147,7 @@ window.CORE = (() => {
     const el = $("#hint"), tt = $("#hint .hint__title"), tx = $("#hint .hint__text");
     let timer = 0;
     return (title, text, ms = 5000) => {
-      tt.textContent = title; tx.innerHTML = text;
+      tt.textContent = title; tx.innerHTML = touchWords(text);
       el.classList.add("is-on"); clearTimeout(timer);
       timer = setTimeout(() => el.classList.remove("is-on"), ms);
     };
@@ -173,7 +182,7 @@ window.CORE = (() => {
     $("#introLinks").innerHTML = links.map(([l, u]) => l === "CV" ? `<a href="#cv" data-cv>CV <span aria-hidden="true">↗</span></a>` : `<a href="${u}" target="_blank" rel="noopener">${l} <span aria-hidden="true">↗</span></a>`).join("");
     $("#introLinks [data-cv]")?.addEventListener("click", (e) => { e.preventDefault(); CV.open(); });
     $("#introBrief")?.addEventListener("click", (e) => { e.preventDefault(); openBrief(); });
-    $("#introCueText").textContent = e.cue || "click the door to come in";
+    $("#introCueText").textContent = touchWords(e.cue || "Click the door to step inside");
     $("#introStats").innerHTML = (e.stats || []).map((s) => `<div class="intro__stat"><b>${s.big}</b><small>${s.small}</small></div>`).join("");
   }
 
@@ -394,7 +403,7 @@ window.CORE = (() => {
     }, { passive: false });
     let lastT = null;
     c.addEventListener("pointerdown", (e) => {
-      app.pointer.down = true; app.pointer.moved = 0; app.pointer.px = e.clientX; app.pointer.py = e.clientY;
+      app.pointer.down = true; app.pointer.moved = 0; app.pointer.px = e.clientX; app.pointer.py = e.clientY; app.pointer.axis = null; app.pointer.ox = e.clientX; app.pointer.oy = e.clientY;
       document.body.classList.add("is-down");
       if (e.pointerType === "touch") lastT = e.clientY;
       c.setPointerCapture?.(e.pointerId);
@@ -405,8 +414,12 @@ window.CORE = (() => {
         const dx = e.clientX - app.pointer.px, dy = e.clientY - app.pointer.py;
         app.pointer.moved += Math.abs(dx) + Math.abs(dy);
         app.pointer.px = e.clientX; app.pointer.py = e.clientY;
-        if (e.pointerType === "touch" && app.current && !app.current.dragScroll) { app.scroll.target -= dy * 2.2 * (app.current.scrollSign ? app.current.scrollSign() : 1); }
-        if (app.current && !app.busy) app.current.onDrag(dx, dy);
+        if (e.pointerType === "touch" && app.current && !app.current.dragScroll) {
+          // a swipe is either a walk (up/down) or a look (sideways), never both
+          if (!app.pointer.axis && Math.hypot(e.clientX - app.pointer.ox, e.clientY - app.pointer.oy) > 10) app.pointer.axis = Math.abs(e.clientX - app.pointer.ox) > Math.abs(e.clientY - app.pointer.oy) ? "x" : "y";
+          if (app.pointer.axis === "y") app.scroll.target -= dy * 2.6 * (app.current.scrollSign ? app.current.scrollSign() : 1);
+          if (app.pointer.axis === "x" && !app.busy) app.current.onDrag(dx * 1.3, 0);
+        } else if (app.current && !app.busy) app.current.onDrag(dx, dy);
       }
     });
     addEventListener("pointerup", (e) => {
@@ -486,7 +499,7 @@ window.CORE = (() => {
 
   async function boot() {
     app.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: true, powerPreference: "high-performance" });
-    app.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+    app.renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 1.75)); // phones: sharp enough, cooler and smoother
     app.renderer.setSize(app.w, app.h);
     app.renderer.outputColorSpace = THREE.SRGBColorSpace;
     bindInput(); buildIntro(); buildMap(); renderAch(); setAudio(app.audio);

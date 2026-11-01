@@ -374,6 +374,49 @@ body.cv-open .hud, body.cv-open .hint { visibility: hidden; }
   .sheet--modal { padding: 30px 22px 26px; }
   .hint { min-width: 0; width: calc(100% - 32px); }
 }
+/* ---------- phones ---------- */
+button, a, [role=tab] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.hud { top: max(18px, env(safe-area-inset-top)); }
+@media (max-width: 640px) {
+  .hud { inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) auto max(10px, env(safe-area-inset-left)); }
+  .hud__right { gap: 6px; }
+  .hud__btn { width: 42px; height: 42px; }
+  .hud__btn svg { width: 21px; height: 21px; }
+  .intro__card { top: calc(max(10px, env(safe-area-inset-top)) + 54px); left: 10px; right: 10px; max-width: none; padding: 12px 16px 14px; }
+  .intro__hello { font-size: 19px; }
+  .intro__name { font-size: 30px; }
+  .intro__role { font-size: 12.5px; margin-top: 8px; }
+  .intro__links { margin-top: 10px; gap: 6px; }
+  .intro__links a { font-size: 12px; padding: 10px 12px 9px; }
+  .intro__brief { font-size: 13px; margin-top: 10px; }
+  .intro__stats { left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); gap: 6px; }
+  .intro__stat { flex: 1; width: auto; padding: 8px 8px 6px; }
+  .intro__stat b { font-size: 17px; }
+  .intro__stat small { font-size: 12.5px; }
+  .intro__cue { top: auto; bottom: 150px; right: 8px; left: auto; }
+  .intro__cueText { font-size: 19px; width: 104px; }
+  .hint { bottom: max(12px, env(safe-area-inset-bottom)); padding: 10px 16px 12px; min-width: 0; width: calc(100% - 24px); }
+  .intro.is-on ~ .hint { bottom: calc(max(10px, env(safe-area-inset-bottom)) + 104px); }
+  .hint__title { font-size: 13px; }
+  .hint__text { font-size: 12.5px; }
+  .sound { top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: 10px; }
+  .sheet--map { padding-bottom: 12px; }
+  .sheet--modal { max-height: 84vh; }
+}
+/* phones held sideways: very little height, so keep the card small and drop the stickies */
+@media (max-height: 500px) and (orientation: landscape) {
+  .intro__card { top: 10px; left: 10px; max-width: 44vw; padding: 10px 14px 12px; }
+  .intro__hello { font-size: 17px; }
+  .intro__name { font-size: 24px; }
+  .intro__role, .intro__tag { display: none; }
+  .intro__links { margin-top: 8px; }
+  .intro__stats { display: none; }
+  .intro__cue { top: 52%; bottom: auto; }
+  .hint { bottom: 8px; padding: 8px 14px 10px; }
+  .sheet--modal, .sheet--brief { max-height: 92vh; }
+  .cv__folder { height: 96vh; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tear__ring, .mp__pinring { animation: none; }
   .hud__btn, .hint, .overlay .sheet, .ach, .sheet__x { transition: none; }
