@@ -7,7 +7,7 @@
   <meta name="description" content="Interactive hand-drawn 3D portfolio of Abhishek Kumar — Engineering Management student at Politecnico di Torino, data analyst, hackathon winner and student leader." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Gloria+Hallelujah&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Gloria+Hallelujah&family=Inter:wght@400;500;600;700;800&family=Permanent+Marker&family=Sedgwick+Ave+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✎</text></svg>" />
 </head>
@@ -24,6 +24,7 @@
   <div class="hud">
     <button class="hud__btn is-hidden" id="btnBack" aria-label="Back to the corridor" title="back to corridor"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button>
     <div class="hud__right">
+      <button class="hud__btn" id="btnBrief" aria-label="Open the one-page summary" title="at a glance"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2" /><path d="M9 7V5h6v2M4 12h16" /></svg></button>
       <button class="hud__btn" id="btnCV" aria-label="Open my CV" title="my CV"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 12h7M9 15.5h7M9 9h3" /></svg></button>
       <button class="hud__btn" id="btnMap" aria-label="Map" title="map"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <button class="hud__btn" id="btnAudio" aria-label="Toggle audio" title="sound"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z" /><path class="snd" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" /><path class="mute" d="M17 9l4 6M21 9l-4 6" /></svg></button>
@@ -39,6 +40,7 @@
       <p class="intro__role" id="introRole"></p>
       <p class="intro__tag" id="introTag"></p>
       <nav class="intro__links" id="introLinks" aria-label="Profiles"></nav>
+      <a class="intro__brief" id="introBrief" href="#brief">Short on time? Read the one-page summary</a>
     </div>
     <div class="intro__cue" id="introCue">
       <span class="intro__cueText" id="introCueText"></span>
@@ -72,6 +74,14 @@
       <button class="sheet__x" id="modalClose" aria-label="Close">×</button>
       <div id="modalBody"></div>
     </div>
+  </div>
+
+  <!-- one-page summary for recruiters -->
+  <div class="overlay" id="brief" role="dialog" aria-modal="true" aria-label="Abhishek Kumar at a glance">
+    <article class="sheet sheet--brief">
+      <button class="sheet__x" id="briefClose" aria-label="Close the summary">×</button>
+      <div id="briefBody"></div>
+    </article>
   </div>
 
   <!-- CV folder: one tab per CV, rendered in the page (js/cv.js) -->
@@ -122,6 +132,7 @@
   <script src="data.js"></script>
   <script src="js/sketch.js"></script>
   <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
   <script src="js/github.js"></script>
   <script src="js/cv.js"></script>
   <script src="js/core.js"></script>

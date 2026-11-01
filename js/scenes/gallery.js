@@ -27,8 +27,18 @@ SCENES.gallery = class extends CORE.BaseScene {
     [0, 0.025].forEach((o) => { const g = new THREE.BufferGeometry().setFromPoints(pts.map((p) => p.clone().add(new THREE.Vector3(0, o, 0)))); this.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x333333 }))); });
     [[-16, 0.4], [16, 0.4]].forEach(([x]) => { const post = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 6), new THREE.MeshBasicMaterial({ color: 0x9a6b3f })); post.position.set(x, 3, -2.5); this.add(post); });
 
-    // posters (two copies so the loop never shows a gap)
-    const projects = D.gallery.projects;
+    // a rooftop wall behind the line, covered in graffiti
+    const wallG = plane(T.graffiti("BUILD · MEASURE · LEARN", { bg: "brick", w: 2048, h: 400, colors: ["#f6cf5a", "#e2574b", "#7b2232"], arrow: false }), 22, 4.3);
+    wallG.position.set(0, 1.9, -7.5); this.add(wallG);
+    const wallG2 = plane(T.graffiti("TORINO", { bg: "brick", w: 1024, h: 420, colors: ["#bfe3d6", "#3e7c82", "#2f5f8a"], rot: 0.03, tag: "AK" }), 9, 3.7);
+    wallG2.position.set(-15, 1.7, -6.4); wallG2.rotation.y = 0.5; this.add(wallG2);
+
+    // posters: hackathon projects plus the newest repos from GitHub (two copies so the loop never shows a gap)
+    const fromGitHub = GH.list.slice(0, D.gallery.githubCount ?? 5).map((r) => ({
+      title: r.title, badge: r.language || "Code", event: r.description || "", date: r.pushed ? "Updated " + new Date(r.pushed + "T12:00:00").toLocaleDateString("en-GB", { month: "short", year: "numeric" }) : "",
+      summary: r.description, bullets: r.bullets, tags: r.topics, links: [...(r.live ? [{ label: "Open the live demo", url: r.live }] : []), { label: "Open on GitHub", url: r.url }],
+    }));
+    const projects = [...D.gallery.projects, ...fromGitHub];
     const copies = projects.length < 7 ? 2 : 1;
     this.spacing = 3.1; this.loop = projects.length * copies * this.spacing;
     this.posters = [];
@@ -42,7 +52,7 @@ SCENES.gallery = class extends CORE.BaseScene {
     });
     this.lastV = 0; this.vel = 0;
   }
-  onEnter() { CORE.hint("ART CRITIC", this.app.D.gallery.hint); }
+  onEnter() { CORE.hint("THE GALLERY", this.app.D.gallery.hint); }
   onDrag(dx) { this.app.scroll.target -= dx * 2.5; }
   onArrow(dir) { this.app.scroll.target += dir * this.spacing / 0.0045; }
   update(dt) {

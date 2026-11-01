@@ -50,13 +50,41 @@ Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Dir
 
 | Input | What it does |
 | --- | --- |
-| Scroll or swipe up and down | Walk the corridor, fly through About |
-| Drag, trackpad swipe, `←` `→` | Look left and right in the corridor |
+| Scroll, swipe, `W` `S` | Walk the corridor. Turned round, scrolling walks you back |
+| Drag, trackpad swipe, `A` `D`, `←` `→` | Turn, all the way round if you like |
+| Browser back / forward, `←` button | Move between rooms. Leaving a room puts you back in its doorway |
 | Drag or `←` `→` in Gallery / Office | Slide the clothesline, rotate the screens |
 | Scroll, drag or `↑` `↓` in the Lab | Flip the rolodex one card at a time |
 | Click, or `Enter` on a hovered thing | Open doors, posters, screens, signposts |
 
 ---
+
+## 🖼️ The corridor is a small museum
+
+Between the doors hang public-domain paintings in gilded frames, each with a museum label, plus typeset quotations from Drucker, Deming, Alan Kay and Van Gogh. Near the end there is a stretch of graffiti, and the Gallery rooftop and the Lab room are sprayed too. The graffiti is drawn in code, not copied from anyone.
+
+Each door is painted in a colour from Turin and opens into a lit room you can see into before you walk through.
+
+| Painting | Artist | Year |
+| --- | --- | --- |
+| The Starry Night | Vincent van Gogh | 1889 |
+| The Great Wave off Kanagawa | Katsushika Hokusai | c. 1831 |
+| Water Lilies | Claude Monet | 1906 |
+| Sunflowers | Vincent van Gogh | 1888 |
+| Girl with a Pearl Earring | Johannes Vermeer | c. 1665 |
+| The Kiss | Gustav Klimt | 1908 |
+| Mona Lisa | Leonardo da Vinci | c. 1503 |
+| Impression, Sunrise | Claude Monet | 1872 |
+
+Images are public domain, via Wikimedia Commons, stored in `assets/art/`. Change or add them under `corridor.paintings` in `data.js`.
+
+## 🎵 Sound
+
+All music and effects are generated in the browser with Web Audio in `js/audio.js`. There is a slow lo-fi loop, plus footsteps, door creaks, paper tears, card flips and a chime for achievements. Nothing is downloaded. To play your own licensed track instead, put the mp3 in `assets/audio/` and set `audio.music` in `data.js`.
+
+## 💼 For recruiters
+
+The briefcase button, or the link on the entrance card, opens a one-page summary. It has experience, selected work, education, skills and contact buttons, readable in under a minute. It is also reachable directly at `#brief`.
 
 ## 📁 CVs for different roles
 

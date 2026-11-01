@@ -64,7 +64,7 @@ SCENES.about = class extends CORE.BaseScene {
       this.add(c); this.clouds.push(c);
     }
   }
-  onEnter() { CORE.hint("SKY WALKER", this.app.D.about.hint); }
+  onEnter() { CORE.hint("ABOUT", this.app.D.about.hint); }
   update(dt) {
     const { lerp } = SK, t = this.time, p = this.app.scroll.v / this.scrollMax;
     this.camera.position.z = lerp(this.zStart, this.zEnd, p);

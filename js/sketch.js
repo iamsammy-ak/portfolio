@@ -14,6 +14,9 @@ window.SK = (() => {
     wood: "#d9b685", woodDark: "#9a6b3f", woodLight: "#ecd8b6", woodFloor: "#eedcbf",
     sun: "#f6cf5a", sunDeep: "#e0ae2e", coral: "#e2574b", coralSoft: "#f2a39a", lilac: "#c9b3e6", mint: "#bfe3d6", peach: "#f7c59f", blue: "#5f93b8",
     water: "#bfdcee", stone: "#e6ddd0", brick: "#dfc3b1", cream: "#f6efe3", terracotta: "#d9986a",
+    // Turin: Granata maroon, tram green, Po blue, porticoes ochre, plaster and walnut
+    granata: "#7b2232", tram: "#2e5e4e", tramLight: "#4f8270", po: "#2f5f8a", ochre: "#d9a23f", teal: "#3e7c82", burnt: "#c2562f",
+    plaster: "#f4e8d0", walnut: "#5c3a21", oak: "#cf9f66",
   };
 
   function canvas(w, h) {
@@ -232,4 +235,15 @@ window.SK = (() => {
   const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 
   return { R, TAU, INK, PAL, canvas, paper, Pen, tex, plane, gradientTex, lerp, clamp, smooth };
+})();
+
+/* image loader shared by the museum walls (cached, so a painting loads once) */
+window.HANG = (() => {
+  const cache = new Map();
+  return {
+    image(src) {
+      if (!cache.has(src)) cache.set(src, new Promise((res, rej) => { const i = new Image(); i.decoding = "async"; i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+      return cache.get(src);
+    },
+  };
 })();

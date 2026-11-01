@@ -20,39 +20,38 @@ window.ART = (() => {
   }
 
   function bricks(w = 2048, h = 1024) {
-    const k = canvas(w, h); paper(k.g, w, h, { base: C.cream, grain: 0.05, smudges: 10 });
-    const p = new Pen(k.g, { width: 1.5, jitter: 0.9, passes: 1, alpha: 0.75 });
+    const k = canvas(w, h); paper(k.g, w, h, { base: "#e9cdb3", grain: 0.05, smudges: 10 });
+    const p = new Pen(k.g, { width: 1.5, jitter: 0.9, passes: 1, alpha: 0.75, ink: "#5a3424" });
     const bh = 52, bw = 128, gap = 7;
+    const tones = ["#c9805e", "#bf6f50", "#d49172", "#b8664a", "#cf8a69", "#c47859"];
     for (let y = 0, row = 0; y < h + bh; y += bh, row++) {
       const off = row % 2 ? bw / 2 : 0;
       for (let x = -bw; x < w + bw; x += bw) {
         const bx = x + off + gap / 2 + R(-2, 2), by = y + gap / 2 + R(-1, 1), bwid = bw - gap + R(-6, 2), bhei = bh - gap + R(-3, 1);
-        // mostly pencil bricks, every third one gets a terracotta wash
-        const fill = Math.random() < 0.34 ? `rgba(205,140,110,${R(0.12, 0.3)})` : G(R(0.02, 0.08));
-        p.rect(bx, by, bwid, bhei, { fill });
-        if (Math.random() < 0.18) p.hatch([[bx, by], [bx + bwid, by], [bx + bwid, by + bhei], [bx, by + bhei]], R(5, 9), R(-0.9, -0.5), 0.12);
+        p.rect(bx, by, bwid, bhei, { fill: pick(tones) });
+        if (Math.random() < 0.2) p.hatch([[bx, by], [bx + bwid, by], [bx + bwid, by + bhei], [bx, by + bhei]], R(5, 9), R(-0.9, -0.5), 0.14);
       }
     }
     return k;
   }
 
   function planks(w = 1024, h = 2048, n = 8) {
-    const k = canvas(w, h); paper(k.g, w, h, { base: C.woodFloor, grain: 0.05 });
-    const p = new Pen(k.g, { width: 1.4, jitter: 0.7, passes: 1, alpha: 0.7, ink: "#6b4a2b" });
-    const pw = w / n;
+    const k = canvas(w, h); paper(k.g, w, h, { base: C.oak, grain: 0.05 });
+    const p = new Pen(k.g, { width: 1.4, jitter: 0.7, passes: 1, alpha: 0.7, ink: "#4a2c16" });
+    const pw = w / n, tones = ["#c9965c", "#d6a873", "#c08b52", "#d29f68"];
     for (let i = 0; i < n; i++) {
       const x = i * pw;
-      p.rect(x, 0, pw, h, { fill: W(R(0.02, 0.1)), alpha: 0 });
-      p.line(x, 0, x, h, { width: 2.2, alpha: 0.7 });
+      p.rect(x, 0, pw, h, { fill: pick(tones), alpha: 0 });
+      p.line(x, 0, x, h, { width: 2.2, alpha: 0.75 });
       let y = R(-300, 0);
-      while (y < h) { y += R(420, 900); if (y < h) p.line(x + 3, y, x + pw - 3, y, { width: 2.4, alpha: 0.75 }); }
+      while (y < h) { y += R(420, 900); if (y < h) p.line(x + 3, y, x + pw - 3, y, { width: 2.4, alpha: 0.8 }); }
       const gn = R(5, 9) | 0;
       for (let g = 0; g < gn; g++) {
         const gx = x + R(8, pw - 8), f = R(150, 420), ph = R(6), amp = R(3, 12), pts = [];
         for (let yy = 0; yy <= h; yy += 100) pts.push([gx + Math.sin(yy / f + ph) * amp, yy]);
-        p.curve(pts, false, { width: R(0.6, 1.2), alpha: R(0.18, 0.4), passes: 1 });
+        p.curve(pts, false, { width: R(0.6, 1.2), alpha: R(0.2, 0.42), passes: 1 });
       }
-      if (Math.random() < 0.6) { const kx = x + R(16, pw - 16), ky = R(h); p.ellipse(kx, ky, R(5, 9), R(10, 22), { alpha: 0.5, fill: W(0.15) }); p.ellipse(kx, ky, R(2, 4), R(5, 9), { alpha: 0.4 }); }
+      if (Math.random() < 0.6) { const kx = x + R(16, pw - 16), ky = R(h); p.ellipse(kx, ky, R(5, 9), R(10, 22), { alpha: 0.5, fill: "rgba(90,50,20,0.25)" }); }
     }
     return k;
   }
@@ -72,29 +71,31 @@ window.ART = (() => {
   }
 
   function ceiling(s = 1024) {
-    const k = canvas(s, s); paper(k.g, s, s, { grain: 0.04, smudges: 10 });
-    const p = new Pen(k.g, { width: 1, jitter: 1.5, passes: 1 });
-    for (let i = 0; i < 16; i++) {
-      const pts = []; let x = R(s), y = R(s); const n = (R(3, 7)) | 0;
-      for (let j = 0; j < n; j++) { pts.push([x, y]); x += R(-180, 180); y += R(-180, 180); }
-      p.stroke(pts, false, { width: R(0.6, 1.4), alpha: R(0.18, 0.4) });
+    const k = canvas(s, s); paper(k.g, s, s, { base: "#fbf5ea", grain: 0.04, smudges: 6 });
+    const p = new Pen(k.g, { width: 1.6, jitter: 1, passes: 1 });
+    // coffered ceiling: a grid of recessed panels
+    for (let x = 0; x < s; x += s / 2) for (let y = 0; y < s; y += s / 2) {
+      p.rect(x + 22, y + 22, s / 2 - 44, s / 2 - 44, { fill: "#f3ead8", alpha: 0.45 });
+      p.rect(x + 46, y + 46, s / 2 - 92, s / 2 - 92, { alpha: 0.25 });
     }
-    for (let x = 0; x <= s; x += s / 2) p.line(x, 0, x, s, { alpha: 0.15 });
-    for (let y = 0; y <= s; y += s / 2) p.line(0, y, s, y, { alpha: 0.15 });
     return k;
   }
 
   /* corridor wall: warm cream, wainscot on the lower third, wooden skirting at the floor.
      The texture is laid once vertically, so y=s is floor level. */
   function wall(s = 1024, plain = false) {
-    const k = canvas(s, s); paper(k.g, s, s, { base: C.cream, grain: 0.045, smudges: 4 });
+    const k = canvas(s, s); paper(k.g, s, s, { base: C.plaster, grain: 0.045, smudges: 4 });
     if (plain) return k;
     const p = new Pen(k.g, { width: 2, jitter: 1, passes: 1 });
-    p.rect(-4, s * 0.64, s + 8, s * 0.36, { fill: "#efe3cf", alpha: 0.5 });
-    for (let x = 0; x < s; x += s / 4) p.rect(x + 18, s * 0.69, s / 4 - 36, s * 0.24, { alpha: 0.35, width: 1.6 });
-    p.line(-4, s * 0.64, s + 4, s * 0.64, { width: 3, alpha: 0.6 });
-    p.rect(-4, s * 0.955, s + 8, s * 0.05, { fill: C.wood, alpha: 0.8 });
-    p.line(-4, s * 0.955, s + 4, s * 0.955, { width: 2.4, alpha: 0.7 });
+    // faint ochre pinstripe wallpaper on the upper wall
+    for (let x = 16; x < s; x += 64) p.line(x, 0, x, s * 0.6, { alpha: 0.22, width: 2, ink: C.ochre });
+    p.rect(-4, s * 0.6, s + 8, s * 0.4, { fill: C.tram });
+    for (let x = 0; x < s; x += s / 4) {
+      p.rect(x + 20, s * 0.665, s / 4 - 40, s * 0.25, { fill: C.tramLight, alpha: 0.5, width: 1.6 });
+      p.rect(x + 34, s * 0.685, s / 4 - 68, s * 0.21, { alpha: 0.35, width: 1.2, ink: "#1d3b31" });
+    }
+    p.rect(-4, s * 0.585, s + 8, s * 0.03, { fill: C.walnut });
+    p.rect(-4, s * 0.955, s + 8, s * 0.05, { fill: C.walnut });
     return k;
   }
 
@@ -360,15 +361,24 @@ window.ART = (() => {
   }
 
   /* a room door — kept light so the hover / open tint (wood) multiplies cleanly */
-  function corridorDoor(kind) {
+  function corridorDoor(kind, color = C.po) {
     const k = canvas(512, 1024), p = new Pen(k.g, { width: 2.6, jitter: 1.1 });
-    p.rect(6, 6, 500, 1012, { fill: "#f1ebe0" });
-    p.rect(40, 40, 432, 960, { fill: "#f9f7f2" });
-    p.rect(80, 80, 352, 380, { fill: "#fdfcf9" });
-    p.rect(80, 520, 352, 420, { fill: "#ece5d8" });
-    p.rect(104, 544, 304, 372, { alpha: 0.5, width: 1.6 });
-    p.rrect(416, 480, 40, 14, 6, { fill: "#e1c067" }); p.circle(436, 487, 10, { fill: "#d9b24e", passes: 1 });
-    icon(p, kind, 256, 270, 240);
+    const g = k.g;
+    p.rect(6, 6, 500, 1012, { fill: color });
+    // raised panels: lighter top-left edge, darker bottom-right
+    [[56, 300, 400, 300], [56, 640, 400, 330]].forEach(([x, y, w, h]) => {
+      p.rect(x, y, w, h, { fill: "rgba(255,255,255,0.08)", alpha: 0.6 });
+      p.line(x + 10, y + 10, x + w - 10, y + 10, { ink: "rgba(255,255,255,0.55)", width: 3, passes: 1 });
+      p.line(x + 10, y + h - 10, x + w - 10, y + h - 10, { ink: "rgba(0,0,0,0.35)", width: 3, passes: 1 });
+    });
+    // name plaque with the room's icon
+    p.rrect(96, 56, 320, 210, 26, { fill: "#fbf6ea" });
+    p.rrect(110, 70, 292, 182, 20, { alpha: 0.35, width: 1.4 });
+    icon(p, kind, 256, 161, 160);
+    // brass knob and plate
+    p.rrect(414, 520, 44, 120, 14, { fill: "#d8b25a" });
+    p.circle(436, 560, 18, { fill: "#e9c96e" });
+    g.save(); g.globalAlpha = 0.12; g.fillStyle = "#000"; g.fillRect(470, 6, 36, 1012); g.restore();
     return k;
   }
 
@@ -714,6 +724,122 @@ window.ART = (() => {
   }
 
 
+
+  /* white door casing with a transparent hole for the doorway */
+  function doorCasing() {
+    const k = canvas(600, 1000), p = new Pen(k.g, { width: 2.4, jitter: 1 });
+    const g = k.g, b = 64; // frame width in px (canvas = 1.5 × 2.5 world units)
+    g.fillStyle = "#fbf6ea";
+    g.fillRect(0, 0, 600, 1000);
+    g.clearRect(b + 6, b + 6, 600 - 2 * b - 12, 1000 - b - 6);
+    p.rect(4, 4, 592, 1000, { alpha: 0.7 });
+    p.rect(b + 6, b + 6, 600 - 2 * b - 12, 1000, { alpha: 0.7 });
+    p.rect(20, 20, 560, 990, { alpha: 0.25, width: 1.4 });
+    return k;
+  }
+
+  /* inside a room: plaster walls washed in the room colour, light falling from a ceiling lamp */
+  function roomWall(color, w = 768, h = 768, floorLine = true) {
+    const k = canvas(w, h); paper(k.g, w, h, { base: "#f7efe0", grain: 0.04 });
+    const g = k.g;
+    g.save(); g.globalAlpha = 0.28; g.fillStyle = color; g.fillRect(0, 0, w, h); g.restore();
+    const gr = g.createRadialGradient(w / 2, h * 0.15, 10, w / 2, h * 0.3, w * 0.8);
+    gr.addColorStop(0, "rgba(255,240,200,0.55)"); gr.addColorStop(1, "rgba(255,240,200,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    const p = new Pen(g, { width: 2, jitter: 1, passes: 1 });
+    if (floorLine) { p.rect(-4, h * 0.94, w + 8, h * 0.06, { fill: C.walnut }); }
+    return k;
+  }
+
+
+  /* ---------- museum wall: gilded frames, labels, quote prints, graffiti ---------- */
+  /* a painting in a gilded frame. img may be null (drawn as an empty canvas while it loads) */
+  function framedPainting(img, ratio) {
+    const iw = 720, ih = Math.round(iw * ratio), F = 64, M = 26;
+    const k = canvas(iw + 2 * (F + M), ih + 2 * (F + M)), g = k.g, W0 = k.w, H0 = k.h;
+    // soft shadow on the wall
+    g.save(); g.shadowColor = "rgba(40,25,10,0.45)"; g.shadowBlur = 22; g.shadowOffsetY = 10; g.fillStyle = "#8a6420"; g.fillRect(M, M, W0 - 2 * M, H0 - 2 * M); g.restore();
+    // gilded moulding: four bevelled sides
+    const gold = (x0, y0, x1, y1) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, "#f3d98a"); gr.addColorStop(0.35, "#c9972f"); gr.addColorStop(0.6, "#f0cf6e"); gr.addColorStop(1, "#9c6c1c"); return gr; };
+    const o = M, i = M + F;
+    [[[o, o], [W0 - o, o], [W0 - i, i], [i, i], 0, o, 0, i],
+     [[W0 - o, o], [W0 - o, H0 - o], [W0 - i, H0 - i], [W0 - i, i], W0 - o, 0, W0 - i, 0],
+     [[W0 - o, H0 - o], [o, H0 - o], [i, H0 - i], [W0 - i, H0 - i], 0, H0 - o, 0, H0 - i],
+     [[o, H0 - o], [o, o], [i, i], [i, H0 - i], o, 0, i, 0]].forEach(([a, b, c, d, x0, y0, x1, y1]) => {
+      g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.lineTo(...c); g.lineTo(...d); g.closePath();
+      g.fillStyle = gold(x0 || 0, y0 || 0, x1 || 1, y1 || 1); g.fill();
+    });
+    const p = new Pen(g, { width: 2, jitter: 0.6, passes: 1, alpha: 0.55, ink: "#5a3d10" });
+    p.rect(o, o, W0 - 2 * o, H0 - 2 * o); p.rect(o + 14, o + 14, W0 - 2 * o - 28, H0 - 2 * o - 28, { alpha: 0.35 }); p.rect(i, i, iw, ih);
+    [[o, o], [W0 - o, o], [o, H0 - o], [W0 - o, H0 - o]].forEach(([x, y]) => p.line(x, y, x + (x < W0 / 2 ? F : -F), y + (y < H0 / 2 ? F : -F), { alpha: 0.4 }));
+    if (img) g.drawImage(img, i, i, iw, ih);
+    else { g.fillStyle = "#e8dfcc"; g.fillRect(i, i, iw, ih); }
+    // a little varnish sheen
+    const sh = g.createLinearGradient(i, i, i + iw, i + ih); sh.addColorStop(0, "rgba(255,255,255,0.10)"); sh.addColorStop(0.5, "rgba(255,255,255,0)"); sh.addColorStop(1, "rgba(0,0,0,0.08)");
+    g.fillStyle = sh; g.fillRect(i, i, iw, ih);
+    return k;
+  }
+
+  /* the small card that sits next to a painting */
+  function museumLabel(title, artist, year) {
+    const k = canvas(360, 170), g = k.g, p = new Pen(g, { width: 1.6, jitter: 0.5, passes: 1 });
+    g.fillStyle = "#fbf8f1"; g.fillRect(6, 6, 348, 158);
+    p.rect(6, 6, 348, 158, { alpha: 0.5 });
+    p.text(title, 26, 54, { size: 30, font: "Georgia, 'Times New Roman', serif", weight: 700, align: "left", maxWidth: 310 });
+    p.text(artist, 26, 98, { size: 22, font: "sans", weight: 600, align: "left", alpha: 0.75, maxWidth: 310 });
+    p.text(year, 26, 132, { size: 20, font: "sans", weight: 500, align: "left", alpha: 0.55 });
+    return k;
+  }
+
+  /* a typeset print of a quotation in a slim black frame */
+  function quotePrint(text, author) {
+    const k = canvas(820, 600), g = k.g, p = new Pen(g, { width: 2, jitter: 0.6, passes: 1 });
+    g.save(); g.shadowColor = "rgba(40,25,10,0.35)"; g.shadowBlur = 16; g.shadowOffsetY = 8; g.fillStyle = "#1f1f1f"; g.fillRect(20, 20, 780, 560); g.restore();
+    g.fillStyle = "#faf6ec"; g.fillRect(44, 44, 732, 512);
+    g.fillStyle = "#fffdf7"; g.fillRect(84, 84, 652, 432);
+    p.rect(84, 84, 652, 432, { alpha: 0.25 });
+    p.text("“", 140, 170, { size: 170, font: "Georgia, serif", weight: 700, color: C.ochre });
+    const h = p.paragraph(text, 410, 150, 520, { size: 38, font: "Georgia, 'Times New Roman', serif", weight: 400, align: "center", lh: 1.32, maxLines: 5 });
+    p.line(370, 172 + h, 450, 172 + h, { ink: C.granata, width: 3 });
+    p.text(author.toUpperCase(), 410, 212 + h, { size: 20, font: "sans", weight: 700, alpha: 0.7, maxWidth: 520 });
+    return k;
+  }
+
+  /* spray-painted graffiti piece on brick, plaster or nothing */
+  function graffiti(text, o = {}) {
+    const w = o.w || 2048, h = o.h || 640;
+    const k = canvas(w, h), g = k.g;
+    const colors = o.colors || [C.ochre, C.burnt, C.granata];
+    if (o.bg === "brick") { const b = bricks(w, h); g.drawImage(b.c, 0, 0); }
+    else if (o.bg === "wall") { paper(g, w, h, { base: "#e9e1d2", grain: 0.06, smudges: 8 }); }
+    const spray = (x, y, r, col, n = 260, a = 0.5) => { g.fillStyle = col; for (let i = 0; i < n; i++) { const ang = R(TAU), d = Math.pow(Math.random(), 1.6) * r; g.globalAlpha = R(0.1, a); g.fillRect(x + Math.cos(ang) * d, y + Math.sin(ang) * d, R(1, 3), R(1, 3)); } g.globalAlpha = 1; };
+    // background blast clouds
+    for (let i = 0; i < 7; i++) spray(R(w * 0.1, w * 0.9), R(h * 0.25, h * 0.75), R(120, 260), pick([C.teal, C.po, C.sky, "#f2a39a"]), 900, 0.35);
+    const font = o.font || "'Sedgwick Ave Display', 'Permanent Marker', cursive";
+    let size = h * 0.62; g.font = `400 ${size}px ${font}`;
+    const maxW = w * 0.86; let tw = g.measureText(text).width; if (tw > maxW) { size *= maxW / tw; g.font = `400 ${size}px ${font}`; tw = g.measureText(text).width; }
+    const cx = w / 2, cy = h * 0.54;
+    g.save(); g.translate(cx, cy); g.rotate(o.rot ?? -0.04); g.textAlign = "center"; g.textBaseline = "middle";
+    // 3D extrusion
+    for (let d = 18; d > 0; d -= 2) { g.fillStyle = d > 4 ? "#2a1a14" : "#3b2a22"; g.fillText(text, d, d * 0.9); }
+    g.lineJoin = "round"; g.lineWidth = size * 0.12; g.strokeStyle = "#1b1b1b"; g.strokeText(text, 0, 0);
+    const gr = g.createLinearGradient(0, -size * 0.45, 0, size * 0.45);
+    colors.forEach((c, i) => gr.addColorStop(i / Math.max(1, colors.length - 1), c));
+    g.fillStyle = gr; g.fillText(text, 0, 0);
+    g.lineWidth = size * 0.025; g.strokeStyle = "rgba(255,255,255,0.85)"; g.setLineDash([size * 0.12, size * 0.25]); g.strokeText(text, -size * 0.02, -size * 0.03); g.setLineDash([]);
+    g.restore();
+    // drips under the letters
+    g.strokeStyle = colors[colors.length - 1]; g.lineCap = "round";
+    for (let i = 0; i < 14; i++) { const x = cx - tw / 2 + R(tw), y = cy + size * 0.32 + R(-10, 10), l = R(20, 110); g.lineWidth = R(5, 11); g.globalAlpha = 0.9; g.beginPath(); g.moveTo(x, y); g.lineTo(x + R(-2, 2), y + l); g.stroke(); g.beginPath(); g.arc(x, y + l, g.lineWidth * 0.7, 0, TAU); g.fillStyle = g.strokeStyle; g.fill(); }
+    g.globalAlpha = 1;
+    // sparkles, an arrow and a small tag
+    const star = (x, y, r) => { g.save(); g.translate(x, y); g.fillStyle = "#fff"; g.beginPath(); for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU, rr = i % 2 ? r * 0.25 : r; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); g.restore(); };
+    star(cx - tw * 0.42, cy - size * 0.42, size * 0.12); star(cx + tw * 0.45, cy - size * 0.2, size * 0.08);
+    if (o.tag !== false) { g.save(); g.translate(w * 0.88, h * 0.86); g.rotate(-0.12); g.font = `400 ${h * 0.09}px 'Permanent Marker', cursive`; g.fillStyle = "#1b1b1b"; g.textAlign = "center"; g.fillText(o.tag || "AK '26", 0, 0); g.restore(); }
+    if (o.arrow) { g.save(); g.strokeStyle = C.granata; g.lineWidth = 16; g.lineCap = "round"; g.beginPath(); g.moveTo(w * 0.06, h * 0.8); g.quadraticCurveTo(w * 0.12, h * 0.55, w * 0.2, h * 0.7); g.stroke(); g.beginPath(); g.moveTo(w * 0.2, h * 0.7); g.lineTo(w * 0.17, h * 0.6); g.moveTo(w * 0.2, h * 0.7); g.lineTo(w * 0.13, h * 0.73); g.stroke(); g.restore(); }
+    return k;
+  }
+
   /* ---------- the Lab: a workshop with a rolodex of GitHub repos ---------- */
   const LANG = { TypeScript: "#a9cfee", JavaScript: "#f8dc7e", Python: "#b6dfad", HTML: "#f6b3ad", CSS: "#cdb6ec", TSQL: "#f9c8a0", "C#": "#cdb6ec", Java: "#f9c8a0" };
   const langColor = (l) => LANG[l] || "#9fd9d4";
@@ -895,6 +1021,7 @@ window.ART = (() => {
     signBoard, corridorDoor, endDoor, frameArt, avatar, avatarRig, title, sectionTitle, lamp, vent, sideTable, plant, pencil, mug, paperBall, planeSketch, arrow, doodle,
     cloud, cloudBig, skyline, railing, poster, monitor, balloon, island, medal, tag,
     lighthouse, boat, pier, signpost,
+    doorCasing, roomWall, framedPainting, museumLabel, quotePrint, graffiti,
     pegboard, tool, repoCard, rolodexBase, langNote, langColor, cabinet, drawer, folderPeek,
   };
 })();

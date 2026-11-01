@@ -189,19 +189,18 @@ window.CV = (() => {
     $("#cvClose").focus({ preventScroll: true });
     current = null;
     await show(files.find((f) => f.id === id) || files[0]);
-    try { history.replaceState(null, "", "#cv"); } catch (_) {}
+    try { if (location.hash !== "#cv") history.pushState({ room: "cv" }, "", "#cv"); } catch (_) {}
   }
 
-  async function close() {
+  async function close(fromHistory) {
     if (!isOpen) return;
+    if (!fromHistory && history.state?.room === "cv") { history.back(); return; }
     isOpen = false;
-    window.CORE?.sound("click");
+    window.CORE?.sound("close");
     gsap.to(el.root.querySelector(".cv__scrim"), { opacity: 0, duration: reduce ? 0 : 0.3 });
     await gsap.to(el.folder, { yPercent: 105, rotation: 3, duration: reduce ? 0 : 0.5, ease: "power2.in" });
     el.root.hidden = true; el.root.setAttribute("aria-hidden", "true");
     document.body.classList.remove("cv-open");
-    const name = window.CORE?.app.current?.name;
-    try { history.replaceState(null, "", "#" + (name && name !== "home" ? name : "")); } catch (_) {}
     lastFocus?.focus?.({ preventScroll: true });
   }
 

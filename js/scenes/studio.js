@@ -33,7 +33,7 @@ SCENES.studio = class extends CORE.BaseScene {
     for (let i = 0; i < 40; i++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), new THREE.MeshBasicMaterial({ color: new THREE.Color(inks[i % inks.length]) })); d.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10); d.rotation.z = Math.random() * 3; ring.add(d); }
     this.lastV = 0;
   }
-  onEnter() { CORE.hint("DIRECTOR", this.app.D.studio.hint); }
+  onEnter() { CORE.hint("THE OFFICE", this.app.D.studio.hint); }
   onArrow(dir) { this.target.y += dir * 0.5; }
   onPan(dx) { this.target.y += dx * 0.003; }
   onDrag(dx, dy) {

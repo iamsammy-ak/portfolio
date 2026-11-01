@@ -38,7 +38,7 @@ SCENES.contact = class extends CORE.BaseScene {
       this.add(s, true); this.posts.push(s);
     });
   }
-  onEnter() { CORE.hint("SOCIABLE", this.app.D.contact.hint); }
+  onEnter() { CORE.hint("CONTACT", this.app.D.contact.hint); }
   update(dt) {
     const t = this.time;
     this.waterTex.offset.x += dt * 0.012; this.waterTex.offset.y += dt * 0.007;

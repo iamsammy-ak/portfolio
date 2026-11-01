@@ -13,12 +13,17 @@ SCENES.home = class extends CORE.BaseScene {
     this.camera.fov = 55; this.camera.position.set(0, 1.6, this.zStart);
     this.fade = []; this.floaters = []; this.arrows = []; this.lamps = []; this.turn = { y: 0 };
     this.yaw = { v: 0, t: 0 }; this.lastScroll = 0; this.skyBits = [];
-    if (this.entered) {
-      const v = ((this.zStart - (-1.5)) / (this.zStart - this.zEnd)) * this.scrollLen;
-      this.app.scroll.v = this.app.scroll.target = v;
-    }
+    this.camX = { v: 0 };
     this.buildOutside();
     this.buildCorridor();
+    if (this.entered) {
+      // come back to where you were: the doorway of the room you left, or your last spot
+      const from = opts.from && this.doors[opts.from], last = this.app.corridorState;
+      let v = this.posFor(-1.5);
+      if (from) { v = this.posFor(from.r.z); this.camX.v = from.side * (this.W / 2 + 1.3); this.yaw.v = this.yaw.t = from.side * Math.PI / 2; }
+      else if (last) { v = last.v; this.yaw.v = this.yaw.t = last.yaw; }
+      this.app.scroll.v = this.app.scroll.target = v;
+    }
   }
 
   /* ---------- outside: brick façade, tree, cat, sign, doors ---------- */
@@ -76,22 +81,38 @@ SCENES.home = class extends CORE.BaseScene {
     });
   }
 
-  /* ---------- inside: floor, walls, doors, frames, doodles ---------- */
+  /* ---------- inside: walls with real doorways, a room behind every door ---------- */
   buildCorridor() {
-    const { plane, tex } = SK, T = ART, D = this.D;
-    const W = 5, H = 3.7, L = 60;
-    const surf = (geoW, geoH, k, repeat, pos, rot) => {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(geoW, geoH), new THREE.MeshBasicMaterial({ map: tex(k, { repeat }) }));
+    const { plane, tex } = SK, T = ART, D = this.D, P = SK.PAL;
+    const W = 5, H = 3.7, L = 60, TILE = 7.5;
+    const DW = 1.1, DH = 2.3; // doorway
+    this.W = W;
+    const mesh = (geoW, geoH, map, pos, rot, o = {}) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(geoW, geoH), new THREE.MeshBasicMaterial({ map, color: o.color, side: o.side || THREE.FrontSide }));
       m.position.set(...pos); m.rotation.set(...rot); this.add(m); return m;
     };
-    surf(W, L, T.planks(), [1, 6], [0, 0, -L / 2], [-Math.PI / 2, 0, 0]);
-    surf(W, L, T.ceiling(), [1, 6], [0, H, -L / 2], [Math.PI / 2, 0, 0]);
+    mesh(W, L, tex(T.planks(), { repeat: [1, 6] }), [0, 0, -L / 2], [-Math.PI / 2, 0, 0]);
+    mesh(W, L, tex(T.ceiling(), { repeat: [1, 12] }), [0, H, -L / 2], [Math.PI / 2, 0, 0]);
     const wallK = T.wall();
-    surf(L, H, wallK, [8, 1], [-W / 2, H / 2, -L / 2], [0, Math.PI / 2, 0]);
-    surf(L, H, wallK, [8, 1], [W / 2, H / 2, -L / 2], [0, -Math.PI / 2, 0]);
-    surf(W, H, wallK, [1, 1], [0, H / 2, -L], [0, 0, 0]);
-    // back of the façade (seen only when looking back) — plain wall
-    [[-W / 2, -1.25], [1.25, W / 2]].forEach(([a, b]) => surf(b - a, H, wallK, [1, 1], [(a + b) / 2, H / 2, -0.01], [0, Math.PI, 0]));
+    mesh(W, H, tex(wallK, { repeat: [W / TILE, 1] }), [0, H / 2, -L], [0, 0, 0]);
+    [[-W / 2, -1.25], [1.25, W / 2]].forEach(([a, b]) => mesh(b - a, H, tex(wallK, { repeat: [(b - a) / TILE, 1] }), [(a + b) / 2, H / 2, -0.01], [0, Math.PI, 0]));
+
+    // side walls, cut around each doorway so you can see into the rooms
+    const rooms = D.corridor.rooms;
+    [-1, 1].forEach((side) => {
+      const x = side * W / 2, ry = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+      const holes = rooms.filter((r) => (r.side === "left" ? -1 : 1) === side).map((r) => [r.z + DW / 2, r.z - DW / 2]).sort((a, b) => b[0] - a[0]);
+      // u along the wall: left walls run towards -z, right walls towards +z
+      const u = (z) => (side < 0 ? -z : z) / TILE;
+      const seg = (zA, zB, y0, y1) => {
+        const len = zA - zB; if (len <= 0.001) return;
+        const t = tex(wallK, { repeat: [len / TILE, (y1 - y0) / H], offset: [side < 0 ? u(zA) : u(zB), y0 / H] });
+        mesh(len, y1 - y0, t, [x, (y0 + y1) / 2, (zA + zB) / 2], [0, ry, 0]);
+      };
+      let z = 0;
+      holes.forEach(([a, b]) => { seg(z, a, 0, H); seg(a, b, DH, H); z = b; });
+      seg(z, -L, 0, H);
+    });
 
     // name, avatar and floating doodles near the entrance
     const flo = (k, w, x, y, z, o = {}) => {
@@ -99,7 +120,6 @@ SCENES.home = class extends CORE.BaseScene {
       m.userData.base = [x, y, z]; m.userData.ph = Math.random() * 6; m.userData.amp = o.amp ?? 0.08; m.userData.spin = o.spin || 0;
       this.add(m); this.fade.push(m); this.floaters.push(m); return m;
     };
-    // the name sits high on the back wall; the character stands to its right so neither hides the other
     const titleM = plane(T.title(D.meta.short, D.meta.title), 4.6); titleM.position.set(-0.55, 2.55, -7.6); this.add(titleM); this.fade.push(titleM);
     this.avatar = T.avatarRig(1.05); this.avatar.position.set(1.55, 1.05, -6.6); this.add(this.avatar);
     this.avatar.userData.parts.forEach((m) => { m.userData.fz = -6.6; this.fade.push(m); });
@@ -107,51 +127,52 @@ SCENES.home = class extends CORE.BaseScene {
     flo(T.paperBall(), 0.45, -1.9, 0.25, -5, { amp: 0.0 });
     flo(T.pencil(), 0.9, 1.6, 0.14, -5.2, { rz: 0.5, amp: 0.0 });
     flo(T.mug(), 0.42, -1.6, 2.2, -6.1, { amp: 0.06 });
-    flo(T.doodle("✱", 128, SK.PAL.coral), 0.4, -2.1, 1.6, -6.2, { spin: 0.4 });
-    flo(T.doodle("#1", 128, SK.PAL.blue), 0.6, 2.1, 3.2, -9, { amp: 0.05 });
-    flo(T.doodle("◌", 128, SK.PAL.sunDeep), 0.3, -2.0, 3.3, -8.5, { spin: 0.3 });
+    flo(T.doodle("✱", 128, P.granata), 0.4, -2.1, 1.6, -6.2, { spin: 0.4 });
+    flo(T.doodle("◌", 128, P.ochre), 0.3, -2.0, 3.3, -8.5, { spin: 0.3 });
 
-    // ceiling lamps
     const lampK = T.lamp();
     for (let z = -8; z > -L; z -= 12) { const l = plane(lampK, 1.6, 0.8); l.position.set(0, H - 0.02, z); l.rotation.x = Math.PI / 2; this.add(l); }
 
-    // doors to the rooms
-    const arrowL = T.arrow(1), arrowR = T.arrow(-1);
-    D.corridor.rooms.forEach((r) => {
-      const left = r.side === "left", x = left ? -W / 2 + 0.02 : W / 2 - 0.02, ry = left ? Math.PI / 2 : -Math.PI / 2;
-      // door hangs on a hinge (pivot) so it can swing into the room when clicked
-      const pivot = new THREE.Group(); pivot.position.set(x, 0, r.z + (left ? 0.55 : -0.55)); pivot.rotation.y = ry;
-      const door = plane(T.corridorDoor(r.icon), 1.1, 2.2, { side: THREE.FrontSide }); door.position.set(0.55, 1.1, 0);
-      const back = plane(T.entranceLeaf([], true, true), 1.1, 2.2, { side: THREE.FrontSide }); back.position.set(0.55, 1.1, -0.01); back.rotation.y = Math.PI;
+    // doors: painted in the room's colour, hinged so they swing INTO the room
+    const casingK = T.doorCasing(), arrowL = T.arrow(1), arrowR = T.arrow(-1);
+    this.doors = {};
+    rooms.forEach((r) => {
+      const left = r.side === "left", side = left ? -1 : 1, x = side * W / 2, ry = left ? Math.PI / 2 : -Math.PI / 2;
+      const color = P[r.color] || r.color || P.po;
+      this.buildRoom(r, side, color);
+      const casing = plane(casingK, 1.5, 2.5); casing.position.set(x - side * 0.012, 1.25, r.z); casing.rotation.y = ry; this.add(casing);
+      // jambs give the doorway some depth
+      [r.z + DW / 2, r.z - DW / 2].forEach((jz) => mesh(0.16, DH, null, [x + side * 0.08, DH / 2, jz], [0, 0, 0], { color: new THREE.Color("#efe5d2"), side: THREE.DoubleSide }));
+      const pivot = new THREE.Group(); pivot.position.set(x + side * 0.03, 0, r.z + (left ? DW / 2 : -DW / 2)); pivot.rotation.y = ry;
+      const doorK = T.corridorDoor(r.icon, color);
+      const door = plane(doorK, DW, DH, { side: THREE.FrontSide }); door.position.set(DW / 2, DH / 2, 0);
+      const back = plane(doorK, DW, DH, { side: THREE.FrontSide }); back.position.set(DW / 2, DH / 2, -0.01); back.rotation.y = Math.PI;
       pivot.add(door); pivot.add(back); this.add(pivot); this.interactives.push(door);
-      door.userData.room = r; let opening = false;
+      this.doors[r.id] = { pivot, ry, r, side };
+      let opening = false;
       door.userData.onClick = () => {
-        if (opening || this.app.busy) return; opening = true;
-        CORE.sound("door"); arrows.forEach((a) => (a.visible = false));
-        gsap.to(pivot.rotation, { y: ry - 1.25, duration: 0.9, ease: "power2.inOut" });
-        gsap.to(door.material.color, { ...new THREE.Color("#cf9a5e"), duration: 0.6 });
-        // glide towards the doorway, then tear into the room
-        gsap.to(this.app.scroll, { target: ((this.zStart - r.z) / (this.zStart - this.zEnd)) * this.scrollLen, duration: 0.9, ease: "power2.inOut" });
-        gsap.to(this.turn, { y: left ? 0.4 : -0.4, duration: 0.9, ease: "power2.inOut" });
-        setTimeout(() => CORE.go(r.id), 650);
+        if (opening || this.app.busy || this.walking) return; opening = true;
+        arrows.forEach((a) => (a.visible = false));
+        this.walkInto(r);
       };
       door.userData.onHover = (on) => {
-        if (opening) return;
+        if (opening || this.walking) return;
         arrows.forEach((a) => (a.visible = on));
-        gsap.to(pivot.rotation, { y: ry - (on ? 0.12 : 0), duration: 0.45, ease: "power2.out" });
-        gsap.to(door.material.color, { ...new THREE.Color(on ? "#f3dcb6" : "#ffffff"), duration: 0.35 });
+        // left ajar so you can see the lit room behind it
+        gsap.to(pivot.rotation, { y: ry + (on ? 0.42 : 0), duration: 0.55, ease: "power2.out" });
+        if (on) CORE.sound("creak");
       };
-      const sign = plane(T.signBoard(r.label, r.sub), 1.35); sign.position.set(x, 2.78, r.z); sign.rotation.y = ry; this.add(sign);
-      const arrows = [[arrowL, r.z - 1.0, left ? 1 : -1], [arrowR, r.z + 1.0, left ? -1 : 1]].map(([k, z, flip]) => {
-        const a = plane(k, 0.5); a.position.set(x, 1.3, z); a.rotation.y = ry; a.scale.x = flip; a.visible = false; a.userData.base = [x, 1.3, z]; this.add(a); this.arrows.push(a); return a;
+      const sign = plane(T.signBoard(r.label, r.sub), 1.35); sign.position.set(x - side * 0.02, 3.05, r.z); sign.rotation.y = ry; this.add(sign);
+      const arrows = [[arrowL, r.z - 1.05, left ? 1 : -1], [arrowR, r.z + 1.05, left ? -1 : 1]].map(([k, z, flip]) => {
+        const a = plane(k, 0.5); a.position.set(x - side * 0.03, 1.3, z); a.rotation.y = ry; a.scale.x = flip; a.visible = false; a.userData.base = [x, 1.3, z]; this.add(a); this.arrows.push(a); return a;
       });
     });
 
-    // framed sketches, vent, table, plant
     D.corridor.frames.forEach((f) => {
       const left = f.side === "left", x = left ? -W / 2 + 0.02 : W / 2 - 0.02;
       const m = plane(T.frameArt(f.lines), 1.6); m.position.set(x, f.y, f.z); m.rotation.y = left ? Math.PI / 2 : -Math.PI / 2; this.add(m);
     });
+    this.hangMuseum();
     const vent = plane(T.vent(), 0.6); vent.position.set(W / 2 - 0.02, 3.05, -18); vent.rotation.y = -Math.PI / 2; this.add(vent);
     const table = plane(T.sideTable(), 1.2); table.position.set(-1.85, 0.6, -27); this.add(table);
     const pl = plane(T.plant(), 0.75); pl.position.set(1.95, 0.6, -52); this.add(pl);
@@ -161,6 +182,83 @@ SCENES.home = class extends CORE.BaseScene {
     this.cabinetZ = -L + 0.05;
     CV.list().then((files) => { if (!this.disposed) this.buildCabinet(files); });
   }
+
+  /* paintings (loaded as images), museum labels, quote prints and the graffiti stretch */
+  hangMuseum() {
+    const { plane, tex } = SK, T = ART, C = this.D.corridor, W = this.W;
+    const onWall = (k, w, side, z, y, h, depth = 0.025) => {
+      const m = plane(k, w, h); m.position.set(side * (W / 2 - depth), y, z); m.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2; this.add(m); return m;
+    };
+    (C.paintings || []).forEach((pt) => {
+      const side = pt.side === "left" ? -1 : 1;
+      // reserve the frame straight away, swap in the picture once it has loaded
+      const ratio0 = pt.ratio || 0.8;
+      const m = onWall(T.framedPainting(null, ratio0), pt.w, side, pt.z, 2.3);
+      HANG.image(pt.src).then((img) => {
+        if (this.disposed) return;
+        const k = T.framedPainting(img, img.height / img.width);
+        m.material.map.dispose(); m.material.map = tex(k); m.material.needsUpdate = true;
+        const h = pt.w * k.h / k.w; m.geometry.dispose(); m.geometry = new THREE.PlaneGeometry(pt.w, h);
+      }).catch(() => {});
+      const right = side < 0 ? -1 : 1; // the viewer's right when facing this wall
+      onWall(T.museumLabel(pt.title, pt.artist, pt.year), 0.46, side, pt.z + right * (pt.w / 2 + 0.3), 1.85);
+    });
+    (C.quotes || []).forEach((q) => onWall(T.quotePrint(q.text, q.author), 1.3, q.side === "left" ? -1 : 1, q.z, 2.3));
+    (C.graffiti || []).forEach((gf) => {
+      const len = Math.abs(gf.from - gf.to), side = gf.side === "left" ? -1 : 1;
+      onWall(T.graffiti(gf.text, { colors: gf.colors, w: 2048, h: Math.round(2048 * 2.1 / len), arrow: gf.text === "SHIP IT" }), len, side, (gf.from + gf.to) / 2, 2.5, 2.1, 0.02);
+    });
+  }
+
+  /* a small furnished room behind each doorway — lit, coloured, with a preview of what is inside */
+  buildRoom(r, side, color) {
+    const { plane, tex } = SK, T = ART, D = this.D;
+    const x0 = side * this.W / 2, Dp = 3.4, Wz = 3.2, Hr = 3.0, cx = x0 + side * Dp / 2;
+    const face = side < 0 ? Math.PI / 2 : -Math.PI / 2; // normal pointing back at the corridor
+    const box = (w, h, k, pos, rot, rep) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex(k, rep ? { repeat: rep } : {}) })); m.position.set(...pos); m.rotation.set(...rot); this.add(m); return m; };
+    box(Dp, Wz, T.parquet(512), [cx, 0.003, r.z], [-Math.PI / 2, 0, 0], [1.5, 1.5]);
+    box(Dp, Wz, T.ceiling(512), [cx, Hr, r.z], [Math.PI / 2, 0, 0]);
+    const backX = x0 + side * Dp;
+    box(Wz, Hr, r.id === "lab" ? T.graffiti("CODE", { bg: "brick", w: 1024, h: 960, colors: ["#f6cf5a", "#c2562f", "#7b2232"], tag: "AK" }) : T.roomWall(color), [backX, Hr / 2, r.z], [0, face, 0]);
+    const sideK = T.roomWall(color, 768, 768);
+    box(Dp, Hr, sideK, [cx, Hr / 2, r.z - Wz / 2], [0, 0, 0]);
+    box(Dp, Hr, sideK, [cx, Hr / 2, r.z + Wz / 2], [0, Math.PI, 0]);
+    const lamp = plane(T.lamp(), 1.2, 0.6); lamp.position.set(cx, Hr - 0.02, r.z); lamp.rotation.x = Math.PI / 2; this.add(lamp);
+    // what you glimpse through the door
+    const onWall = (k, w, y, dz, h) => { const m = plane(k, w, h); m.position.set(backX - side * 0.03, y, r.z + dz); m.rotation.y = face; this.add(m); return m; };
+    if (r.id === "gallery") {
+      [["assets/art/the-kiss.jpg", -1.05, 0.8], ["assets/art/starry-night.jpg", 0, 1.25], ["assets/art/great-wave.jpg", 1.05, 0.8]].forEach(([src, dz, w]) => {
+        const m = onWall(T.framedPainting(null, 0.8), w, 1.65, dz);
+        HANG.image(src).then((img) => { if (this.disposed) return; const k = T.framedPainting(img, img.height / img.width); m.material.map.dispose(); m.material.map = tex(k); m.geometry.dispose(); m.geometry = new THREE.PlaneGeometry(w, w * k.h / k.w); }).catch(() => {});
+      });
+    } else if (r.id === "studio") {
+      onWall(T.monitor(D.studio.items[0], 0), 1.6, 1.55, 0);
+      onWall(T.sideTable(), 1.3, 0.62, 0.9);
+    } else if (r.id === "lab") {
+      if (GH.list[0]) onWall(T.repoCard(GH.list[0], 0), 1.1, 0.95, 0.8);
+    } else if (r.id === "about") {
+      onWall(T.windowSketch(), 1.5, 1.65, -0.6);
+      onWall(T.quotePrint("Quality is not an act, it is a habit.", "Will Durant, on Aristotle"), 1.0, 1.7, 0.85);
+    } else if (r.id === "contact") {
+      onWall(T.windowSketch(), 1.5, 1.7, -0.5);
+      onWall(T.signpost("HELLO"), 1.1, 0.75, 0.8);
+    }
+  }
+
+  /* click a door: it swings into the room, you turn, walk through, then the page tears */
+  walkInto(r) {
+    const d = this.doors[r.id], side = d.side;
+    this.walking = true;
+    this.app.corridor = { room: r.id }; // so coming back puts you in this doorway
+    CORE.sound("door");
+    gsap.to(d.pivot.rotation, { y: d.ry + 1.7, duration: 1.2, ease: "power2.inOut" });
+    gsap.to(this.app.scroll, { target: this.posFor(r.z), v: this.posFor(r.z), duration: 0.9, ease: "power2.inOut" });
+    gsap.to(this.yaw, { t: -side * Math.PI / 2, v: -side * Math.PI / 2, duration: 0.9, ease: "power2.inOut" });
+    gsap.to(this.camX, { v: side * (this.W / 2 + 1.5), duration: 1.3, delay: 0.55, ease: "power2.in" });
+    setTimeout(() => CORE.go(r.id), 1350);
+  }
+
+  posFor(z) { return ((this.zStart - z) / (this.zStart - this.zEnd)) * this.scrollLen; }
 
   /* drawers slide out on hover with the folder peeking up; click pulls one
      all the way out and opens that CV in the folder viewer */
@@ -206,7 +304,10 @@ SCENES.home = class extends CORE.BaseScene {
     });
   }
 
-  dispose() { this.disposed = true; super.dispose(); }
+  dispose() {
+    if (this.entered) this.app.corridorState = { v: this.app.scroll.v, yaw: this.yaw.v };
+    this.disposed = true; super.dispose();
+  }
 
   enter() {
     if (this.entered) return;
@@ -218,38 +319,61 @@ SCENES.home = class extends CORE.BaseScene {
     });
     this.scrollMax = this.scrollLen;
     document.getElementById("intro").classList.remove("is-on");
+    CORE.pushRoom("hall");
     // walk in by yourself once the doors are open
     gsap.to(this.app.scroll, { target: 1150, duration: 3.2, delay: 0.9, ease: "power2.inOut" });
-    setTimeout(() => CORE.hint("WANDERER", this.D.corridor.hintExplore + " · <b>drag</b> or <b>← →</b> to look around"), 1800);
+    setTimeout(() => CORE.hint("THE CORRIDOR", this.D.corridor.hintExplore + " · <b>drag</b> or <b>A D</b> to turn all the way round"), 1800);
   }
 
   onEnter() {
-    if (this.entered) CORE.hint("EXPLORER", this.D.corridor.hintEnter + " · <b>drag</b> or <b>← →</b> to look around");
+    const from = this.opts.from && this.doors[this.opts.from];
+    if (from) {
+      // step back out of the room you were in, then the door swings shut behind you
+      const { pivot, ry, side } = from;
+      pivot.rotation.y = ry + 1.7;
+      this.walking = true;
+      gsap.to(this.camX, { v: 0, duration: 1.4, ease: "power2.out" });
+      gsap.to(this.yaw, { t: -side * 0.35, v: -side * 0.35, duration: 1.6, ease: "power2.inOut" });
+      gsap.to(pivot.rotation, { y: ry, duration: 1.1, delay: 0.9, ease: "power2.inOut", onStart: () => CORE.sound("close") });
+      setTimeout(() => { this.walking = false; }, 1500);
+    }
+    if (this.entered) CORE.hint("THE CORRIDOR", this.D.corridor.hintEnter + " · <b>drag</b> or <b>A D</b> to look around");
   }
 
-  /* look left / right: drag, trackpad swipe or arrow keys */
-  onDrag(dx) { if (this.entered) this.yaw.t = SK.clamp(this.yaw.t + dx * 0.0035, -1.15, 1.15); }
-  onPan(dx) { if (this.entered) this.yaw.t = SK.clamp(this.yaw.t + dx * 0.0022, -1.15, 1.15); }
-  onArrow(dir) { if (this.entered) this.yaw.t = SK.clamp(this.yaw.t + dir * 0.38, -1.15, 1.15); }
+  /* free look: drag, trackpad swipe, arrow keys or A / D turn you all the way round */
+  onDrag(dx) { if (this.entered && !this.walking) this.yaw.t += dx * 0.0035; }
+  onPan(dx) { if (this.entered && !this.walking) this.yaw.t += dx * 0.0022; }
+  onArrow(dir) { if (this.entered && !this.walking) this.yaw.t += dir * 0.5; }
+  /* scrolling walks the way you are facing: turned round, it takes you back */
+  scrollSign() { return Math.cos(this.yaw.v) < -0.2 ? -1 : 1; }
 
   update(dt) {
     const { lerp, smooth } = SK, t = this.time, cam = this.camera;
     const p = this.scrollLen ? this.app.scroll.v / this.scrollLen : 0;
     const z = lerp(this.zStart, this.zEnd, p);
+    const speed = Math.abs(this.app.scroll.v - this.lastScroll) / Math.max(dt, 0.001);
+    this.lastScroll = this.app.scroll.v;
     cam.position.z = z;
+    cam.position.x = this.camX.v;
     const out = smooth(0.5, 9.5, z); // outside the building: stand taller and look up at the façade
-    cam.position.y = 1.6 + out * 0.5 + Math.sin(z * 2.2) * 0.018;
-    this.parallax(dt, this.entered ? 0.16 : 0.08);
-    // head turn eases towards the target and drifts back to centre while you walk
-    const moving = Math.abs(this.app.scroll.v - this.lastScroll) > 0.4; this.lastScroll = this.app.scroll.v;
-    if (moving && !this.app.pointer.down) this.yaw.t *= Math.pow(0.25, dt);
-    this.yaw.v = lerp(this.yaw.v, this.yaw.t, 1 - Math.pow(0.004, dt));
+    // a soft step bob that only shows while walking
+    this.bob = lerp(this.bob || 0, Math.min(speed / 900, 1), 1 - Math.pow(0.01, dt));
+    cam.position.y = 1.6 + out * 0.5 + Math.sin(z * 2.4) * 0.025 * this.bob;
+    this.parallax(dt, this.entered ? 0.12 : 0.08);
+    // small glances drift back to centre while you walk; a deliberate turn stays put
+    if (speed > 15 && !this.app.pointer.down && !this.walking && Math.abs(this.yaw.t) < 0.7) this.yaw.t *= Math.pow(0.35, dt);
+    if (!this.walking) this.yaw.v = lerp(this.yaw.v, this.yaw.t, 1 - Math.pow(0.004, dt));
     cam.rotation.x += out * 0.2; cam.rotation.y += this.turn.y + this.yaw.v;
+    cam.rotation.z = Math.sin(z * 1.2) * 0.004 * this.bob;
     if (p > 0.18) CORE.unlock("wanderer");
-    if (p > 0.9 && !this.cvHinted) { this.cvHinted = true; CORE.hint("MY CV", "Pull a drawer to read a version of my CV · or press the <b>CV</b> button any time", 6000); }
+    // footsteps
+    if (this.entered && speed > 120) { this.stepAcc = (this.stepAcc || 0) + speed * dt; if (this.stepAcc > 330) { this.stepAcc = 0; CORE.sound("step"); } }
+    if (p > 0.9 && !this.cvHinted) { this.cvHinted = true; CORE.hint("MY CV", "Pull a drawer to read a version of my CV · the <b>CV</b> button opens it from anywhere", 6000); }
     this.skyBits.forEach((b) => { if (b.userData.sp) { b.position.x += b.userData.sp * dt; if (b.position.x > 16) b.position.x = -16; } if (b.userData.spin) b.rotation.z += dt * b.userData.spin; if (b.userData.ph !== undefined) b.position.y += Math.sin(t * 3 + b.userData.ph) * 0.002; });
     // things near the entrance fade out as you walk through them
-    this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = 1 - smooth(-1.0, 0.4, d); });
+    // …and the big name steps aside when you turn to look at the walls
+    const turned = smooth(0.35, 0.9, Math.abs(Math.sin(this.yaw.v)));
+    this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = (1 - smooth(-1.0, 0.4, d)) * (1 - turned * 0.92); });
     this.avatar.userData.tick(t);
     this.floaters.forEach((m) => { const b = m.userData.base; m.position.y = b[1] + Math.sin(t * 1.4 + m.userData.ph) * m.userData.amp; if (m.userData.spin) m.rotation.z += dt * m.userData.spin; });
     this.arrows.forEach((a) => { if (a.visible) a.position.z = a.userData.base[2] + Math.sin(t * 5) * 0.05 * (a.scale.x); });

@@ -96,23 +96,8 @@ window.CORE = (() => {
     return api;
   })();
 
-  /* ---------- sounds (tiny synth, no files) ---------- */
-  let actx = null;
-  function sound(kind) {
-    if (!app.audio) return;
-    try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      if (actx.state === "suspended") actx.resume();
-      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
-      o.connect(g); g.connect(actx.destination);
-      const P = { click: [520, 0.08, "triangle"], door: [180, 0.5, "sawtooth"], unlock: [660, 0.35, "sine"], whoosh: [240, 0.6, "sine"], pop: [880, 0.12, "square"] }[kind] || [440, 0.1, "sine"];
-      o.type = P[2]; o.frequency.setValueAtTime(P[0], t);
-      if (kind === "unlock") o.frequency.exponentialRampToValueAtTime(P[0] * 1.5, t + 0.15);
-      if (kind === "door" || kind === "whoosh") o.frequency.exponentialRampToValueAtTime(P[0] * 0.5, t + P[1]);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(kind === "door" ? 0.05 : 0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + P[1]);
-      o.start(t); o.stop(t + P[1] + 0.05);
-    } catch (_) {}
-  }
+  /* ---------- sounds: see js/audio.js ---------- */
+  const sound = (kind) => AUDIO.sound(kind);
 
   /* ---------- HUD ---------- */
   const hint = (() => {
@@ -153,6 +138,7 @@ window.CORE = (() => {
     const links = [["LinkedIn", m.links.linkedin], ["GitHub", m.links.github], ["CV", m.links.cv]].filter(([, u]) => u);
     $("#introLinks").innerHTML = links.map(([l, u]) => l === "CV" ? `<a href="#cv" data-cv>CV <span aria-hidden="true">↗</span></a>` : `<a href="${u}" target="_blank" rel="noopener">${l} <span aria-hidden="true">↗</span></a>`).join("");
     $("#introLinks [data-cv]")?.addEventListener("click", (e) => { e.preventDefault(); CV.open(); });
+    $("#introBrief")?.addEventListener("click", (e) => { e.preventDefault(); openBrief(); });
     $("#introCueText").textContent = e.cue || "click the door to come in";
     $("#introStats").innerHTML = (e.stats || []).map((s) => `<div class="intro__stat"><b>${s.big}</b><small>${s.small}</small></div>`).join("");
   }
@@ -193,6 +179,60 @@ window.CORE = (() => {
   const openMap = () => { $("#map").classList.add("is-on"); sound("click"); };
   const closeMap = () => $("#map").classList.remove("is-on");
 
+  /* ---------- "At a glance": a plain one-page summary for recruiters ---------- */
+  function buildBrief() {
+    const m = D.meta, A = D.about, esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const repos = GH.list.slice(0, 4);
+    const projects = D.gallery.projects.slice(0, 3);
+    $("#briefBody").innerHTML = `
+      <header class="brief__head">
+        <div>
+          <h2 class="brief__name">${esc(m.name)}</h2>
+          <p class="brief__role">${esc(m.role)} · ${esc(m.location)}</p>
+          <p class="brief__avail">${esc(m.availability || "")}</p>
+        </div>
+        <nav class="brief__cta" aria-label="Contact">
+          <button class="cv__btn cv__btn--main" type="button" data-cv>Read my CV</button>
+          <a class="cv__btn" href="mailto:${esc(m.email)}">Email me</a>
+          <a class="cv__btn" href="${esc(m.links.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="cv__btn" href="${esc(m.links.github)}" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </header>
+      <p class="brief__sum">${esc(m.summary || "")}</p>
+      <div class="brief__grid">
+        <section class="brief__main">
+          <h3>Experience</h3>
+          <ol class="brief__xp">${D.studio.items.map((it) => `<li><div class="brief__xphead"><b>${esc(it.title)}</b><span>${esc(it.period)}</span></div><p class="brief__org">${esc(it.org)}</p>${it.bullets?.length ? `<ul>${it.bullets.slice(0, 2).map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}</li>`).join("")}</ol>
+          <h3>Selected work</h3>
+          <ul class="brief__work">
+            ${projects.map((p) => `<li><b>${esc(p.title)}</b> <span class="brief__tag">${esc(p.badge || "")}</span><p>${esc(p.summary)}</p></li>`).join("")}
+            ${repos.map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.title)}</b></a> <span class="brief__tag">${esc(r.language || "Code")}</span><p>${esc(r.description || "")}</p></li>`).join("")}
+          </ul>
+        </section>
+        <aside class="brief__side">
+          <h3>Education</h3>
+          <ul class="brief__plain">${(D.education || []).map((e) => `<li><b>${esc(e.degree)}</b><br>${esc(e.school)} · ${esc(e.years)}</li>`).join("")}</ul>
+          <h3>Skills</h3>
+          <p class="brief__chips">${A.skills.items.map((s) => `<span>${esc(s)}</span>`).join("")}</p>
+          <h3>Certificates</h3>
+          <ul class="brief__plain">${A.awards.items.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>
+          <h3>Languages</h3>
+          <ul class="brief__plain">${A.languages.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
+        </aside>
+      </div>`;
+    $("#briefBody [data-cv]").addEventListener("click", () => { closeBrief(); CV.open(); });
+  }
+  function openBrief(fromHistory) {
+    buildBrief(); $("#brief").classList.add("is-on"); sound("open");
+    if (!fromHistory) try { history.pushState({ room: "brief" }, "", "#brief"); } catch (_) {}
+    setTimeout(() => $("#briefClose").focus({ preventScroll: true }), 50);
+  }
+  function closeBrief(fromHistory) {
+    const el = $("#brief"); if (!el || !el.classList.contains("is-on")) return;
+    el.classList.remove("is-on");
+    if (!fromHistory && history.state?.room === "brief") history.back();
+  }
+
   /* project / experience modal */
   function modal(item) {
     const m = $("#modal");
@@ -209,21 +249,36 @@ window.CORE = (() => {
   const closeModal = () => $("#modal").classList.remove("is-on");
 
   function setAudio(on) {
-    app.audio = on; $("#btnAudio").classList.toggle("is-off", !on);
+    app.audio = on; $("#btnAudio").classList.toggle("is-off", !on); AUDIO.setOn(on);
     try { localStorage.setItem("ak_audio", on ? "on" : "off"); } catch (_) {}
   }
 
   /* ---------- scene switching ---------- */
+  const keyOf = (name, opts) => (name === "home" ? (opts.inside ? "hall" : "") : name);
+  function pushRoom(key) { try { if (location.hash.slice(1) !== key) history.pushState({ room: key }, "", "#" + key); } catch (_) {} }
   async function go(name, opts = {}) {
     if (app.busy) return;
-    if (app.current?.name === name && !opts.force) return;
-    app.busy = true; closeModal(); closeMap(); $("#ach").classList.remove("is-on");
-    sound("whoosh");
+    if (app.current?.name === name && !opts.force && !(name === "home" && opts.inside && !app.current.entered)) return;
+    app.busy = true; closeModal(); closeMap(); closeBrief(); $("#ach").classList.remove("is-on");
+    if (!opts.fromHistory) pushRoom(keyOf(name, opts));
+    sound("tear");
     await TEAR.close();
     swap(name, opts);
     await TEAR.open();
     app.busy = false;
     app.current?.onEnter?.();
+  }
+  // the browser's back / forward buttons walk you between rooms
+  function onPop() {
+    const key = location.hash.slice(1);
+    if (CV.isOpen && key !== "cv") { CV.close(true); return; }
+    if (key === "cv") { CV.open(); return; }
+    if (key === "brief") { openBrief(true); return; }
+    if ($("#brief").classList.contains("is-on")) closeBrief(true);
+    const from = app.current?.name;
+    if (key === "" ) go("home", { fromHistory: true, force: app.current?.entered });
+    else if (key === "hall") go("home", { inside: true, from, fromHistory: true });
+    else if (SCENES[key]) go(key, { fromHistory: true });
   }
   function swap(name, opts) {
     if (app.current) app.current.dispose();
@@ -236,7 +291,6 @@ window.CORE = (() => {
     $("#intro").classList.toggle("is-on", name === "home" && !opts.inside);
     setPin(name);
     document.title = `${name === "home" ? "" : name[0].toUpperCase() + name.slice(1) + " — "}${D.meta.name} · Portfolio`;
-    try { history.replaceState(null, "", "#" + (name === "home" ? "" : name)); } catch (_) {}
   }
 
   /* ---------- input ---------- */
@@ -247,8 +301,9 @@ window.CORE = (() => {
       const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? app.h : 1;
       const dy = e.deltaY * k, dx = e.deltaX * k;
       // sideways trackpad swipes: look around in the corridor, slide the clothesline in the gallery
+      const sign = app.current.scrollSign ? app.current.scrollSign() : 1;
       if (Math.abs(dx) > Math.abs(dy)) { if (app.current.onPan) app.current.onPan(dx); else app.scroll.target += dx; }
-      else app.scroll.target += dy;
+      else app.scroll.target += SK.clamp(dy, -160, 160) * sign;
     }, { passive: true });
     let lastT = null;
     c.addEventListener("pointerdown", (e) => {
@@ -263,7 +318,7 @@ window.CORE = (() => {
         const dx = e.clientX - app.pointer.px, dy = e.clientY - app.pointer.py;
         app.pointer.moved += Math.abs(dx) + Math.abs(dy);
         app.pointer.px = e.clientX; app.pointer.py = e.clientY;
-        if (e.pointerType === "touch" && app.current && !app.current.dragScroll) { app.scroll.target -= dy * 2.2; }
+        if (e.pointerType === "touch" && app.current && !app.current.dragScroll) { app.scroll.target -= dy * 2.2 * (app.current.scrollSign ? app.current.scrollSign() : 1); }
         if (app.current && !app.busy) app.current.onDrag(dx, dy);
       }
     });
@@ -276,10 +331,19 @@ window.CORE = (() => {
       }
     });
     addEventListener("keydown", (e) => {
-      if (CV.isOpen || e.target.closest?.("input, textarea")) return;
-      const step = { ArrowDown: 1, PageDown: 1, " ": 1, ArrowUp: -1, PageUp: -1 }[e.key];
-      if (step) { if (app.current?.onStep) app.current.onStep(step); else app.scroll.target += step * 120; }
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") { const d = e.key === "ArrowLeft" ? -1 : 1; if (app.current?.onArrow) app.current.onArrow(d); else app.scroll.target += d * 160; }
+      if (CV.isOpen || e.target.closest?.("input, textarea, a, button") && e.key === " ") return;
+      if ($("#brief").classList.contains("is-on")) { if (e.key === "Escape") closeBrief(); return; }
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      const step = { ArrowDown: 1, PageDown: 1, " ": 1, ArrowUp: -1, PageUp: -1, w: -1, s: 1 }[k];
+      if (step) {
+        const sign = app.current?.scrollSign ? app.current.scrollSign() : 1;
+        // W walks forward, S walks back, whichever way you are facing
+        const d = k === "w" ? 1 : k === "s" ? -1 : step;
+        if (app.current?.onStep) app.current.onStep(k === "w" || k === "s" ? (k === "w" ? 1 : -1) : step);
+        else app.scroll.target += (k === "w" || k === "s" ? d * sign : step) * 220;
+      }
+      if (k === "a" || k === "d") app.current?.onArrow?.(k === "a" ? -1 : 1);
+      if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.target.closest?.("[role=tablist]")) { const d = e.key === "ArrowLeft" ? -1 : 1; if (app.current?.onArrow) app.current.onArrow(d); else app.scroll.target += d * 160; }
       if (e.key === "Enter" && app.current?.hovered?.userData.onClick) app.current.hovered.userData.onClick();
       if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); }
     });
@@ -291,7 +355,14 @@ window.CORE = (() => {
     $("#btnMap").addEventListener("click", openMap);
     $("#btnCV").addEventListener("click", () => CV.open());
     $("#mapClose").addEventListener("click", closeMap);
-    $("#btnBack").addEventListener("click", () => go("home", { inside: true }));
+    $("#btnBack").addEventListener("click", () => go("home", { inside: true, from: app.current?.name }));
+    $("#btnBrief").addEventListener("click", () => openBrief());
+    $("#briefClose").addEventListener("click", () => closeBrief());
+    $("#brief").addEventListener("click", (e) => { if (e.target.id === "brief") closeBrief(); });
+    addEventListener("popstate", onPop);
+    // music starts the first time someone interacts (browsers block autoplay)
+    const kick = () => { if (app.audio) AUDIO.startMusic(); removeEventListener("pointerdown", kick); removeEventListener("keydown", kick); };
+    addEventListener("pointerdown", kick); addEventListener("keydown", kick);
     $("#btnAudio").addEventListener("click", () => { setAudio(!app.audio); sound("click"); });
     $("#btnAch").addEventListener("click", () => { $("#ach").classList.toggle("is-on"); $("#btnAch").classList.remove("has-new"); sound("click"); });
     $("#achClose").addEventListener("click", () => $("#ach").classList.remove("is-on"));
@@ -318,7 +389,8 @@ window.CORE = (() => {
     const dt = Math.min(clock.getDelta(), 0.05);
     const s = app.current; if (!s) return;
     if (!s.wrapScroll) app.scroll.target = clamp(app.scroll.target, 0, s.scrollMax);
-    app.scroll.v = lerp(app.scroll.v, app.scroll.target, 1 - Math.pow(0.05, dt));
+    // heavy, cinematic easing: the camera glides to where the wheel pointed it
+    app.scroll.v = lerp(app.scroll.v, app.scroll.target, 1 - Math.pow(0.022, dt));
     s.time += dt;
     s.update(dt);
     if (!app.pointer.down) raycast();
@@ -335,7 +407,7 @@ window.CORE = (() => {
     const want = location.hash.slice(1);
     await TEAR.load(async () => {
       await document.fonts.ready;
-      await Promise.all(["700 20px 'Gloria Hallelujah'", "700 20px 'Caveat'", "600 20px 'Inter'"].map((f) => document.fonts.load(f).catch(() => {})));
+      await Promise.all(["700 20px 'Gloria Hallelujah'", "700 20px 'Caveat'", "600 20px 'Inter'", "400 20px 'Sedgwick Ave Display'", "400 20px 'Permanent Marker'"].map((f) => document.fonts.load(f).catch(() => {})));
       swap("home", {});
     });
     loop();
@@ -343,9 +415,12 @@ window.CORE = (() => {
     app.busy = false;
     app.current.onEnter?.();
     // shared links: #lab, #gallery … open that room, #cv opens the CV folder
+    try { history.replaceState({ room: "" }, "", location.pathname + location.search); } catch (_) {}
     if (want === "cv") CV.open();
+    else if (want === "brief") openBrief();
+    else if (want === "hall") go("home", { inside: true });
     else if (SCENES[want] && want !== "home") go(want);
   }
 
-  return { app, BaseScene, go, hint, unlock, sound, modal, boot };
+  return { app, BaseScene, go, hint, unlock, sound, modal, boot, pushRoom };
 })();

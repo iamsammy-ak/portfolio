@@ -77,7 +77,7 @@ SCENES.lab = class extends CORE.BaseScene {
     CORE.unlock("tinkerer");
   }
 
-  onEnter() { CORE.hint("TINKERER", this.app.D.github.hint); }
+  onEnter() { CORE.hint("THE LAB", this.app.D.github.hint); }
   onDrag(dx, dy) { this.app.scroll.target -= dy * 4 + dx * 1.5; }
   onPan(dx) { this.app.scroll.target += dx * 2; }
   onArrow(dir) { this.step(dir); }
@@ -95,7 +95,7 @@ SCENES.lab = class extends CORE.BaseScene {
 
     const f = s.v / this.STEP, front = clamp(Math.round(f), 0, this.cards.length - 1);
     if (front !== this.front) {
-      if (this.front !== -1) { CORE.sound("pop"); this.flip = 1; }
+      if (this.front !== -1) { CORE.sound("flip"); this.flip = 1; }
       this.front = front;
     }
     this.flip = Math.max(0, this.flip - dt * 3);
