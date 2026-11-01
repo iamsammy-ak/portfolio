@@ -264,6 +264,7 @@ window.CORE = (() => {
     sound("tear");
     await TEAR.close();
     swap(name, opts);
+    app.current?.onSwap?.();
     await TEAR.open();
     app.busy = false;
     app.current?.onEnter?.();
@@ -297,6 +298,9 @@ window.CORE = (() => {
   function bindInput() {
     const c = app.renderer.domElement;
     addEventListener("wheel", (e) => {
+      // a sideways trackpad swipe is the browser's "go back" gesture; over the 3D world it must only turn you
+      const inPanel = e.target.closest?.(".cv__desk, .sheet, .ach, .cv__rail");
+      if (!inPanel) e.preventDefault();
       if (!app.current || app.busy || CV.isOpen || $("#modal").classList.contains("is-on") || $("#map").classList.contains("is-on")) return;
       const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? app.h : 1;
       const dy = e.deltaY * k, dx = e.deltaX * k;
@@ -304,7 +308,7 @@ window.CORE = (() => {
       const sign = app.current.scrollSign ? app.current.scrollSign() : 1;
       if (Math.abs(dx) > Math.abs(dy)) { if (app.current.onPan) app.current.onPan(dx); else app.scroll.target += dx; }
       else app.scroll.target += SK.clamp(dy, -160, 160) * sign;
-    }, { passive: true });
+    }, { passive: false });
     let lastT = null;
     c.addEventListener("pointerdown", (e) => {
       app.pointer.down = true; app.pointer.moved = 0; app.pointer.px = e.clientX; app.pointer.py = e.clientY;

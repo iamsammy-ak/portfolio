@@ -87,8 +87,14 @@ window.ART = (() => {
     const k = canvas(s, s); paper(k.g, s, s, { base: C.plaster, grain: 0.045, smudges: 4 });
     if (plain) return k;
     const p = new Pen(k.g, { width: 2, jitter: 1, passes: 1 });
-    // faint ochre pinstripe wallpaper on the upper wall
-    for (let x = 16; x < s; x += 64) p.line(x, 0, x, s * 0.6, { alpha: 0.22, width: 2, ink: C.ochre });
+    // trellis wallpaper on the upper wall, with a picture rail near the ceiling
+    const g2 = k.g; g2.save(); g2.strokeStyle = C.ochre; g2.globalAlpha = 0.28; g2.lineWidth = 2;
+    for (let y = 0; y < s * 0.58; y += 64) for (let x = (y / 64) % 2 ? 32 : 0; x < s + 64; x += 64) {
+      g2.beginPath(); g2.moveTo(x, y - 26); g2.lineTo(x + 20, y); g2.lineTo(x, y + 26); g2.lineTo(x - 20, y); g2.closePath(); g2.stroke();
+      g2.fillStyle = C.granata; g2.globalAlpha = 0.25; g2.beginPath(); g2.arc(x, y, 3.5, 0, TAU); g2.fill(); g2.globalAlpha = 0.28;
+    }
+    g2.restore();
+    p.rect(-4, s * 0.035, s + 8, s * 0.012, { fill: C.walnut });
     p.rect(-4, s * 0.6, s + 8, s * 0.4, { fill: C.tram });
     for (let x = 0; x < s; x += s / 4) {
       p.rect(x + 20, s * 0.665, s / 4 - 40, s * 0.25, { fill: C.tramLight, alpha: 0.5, width: 1.6 });
@@ -792,16 +798,26 @@ window.ART = (() => {
   }
 
   /* a typeset print of a quotation in a slim black frame */
-  function quotePrint(text, author) {
-    const k = canvas(820, 600), g = k.g, p = new Pen(g, { width: 2, jitter: 0.6, passes: 1 });
-    g.save(); g.shadowColor = "rgba(40,25,10,0.35)"; g.shadowBlur = 16; g.shadowOffsetY = 8; g.fillStyle = "#1f1f1f"; g.fillRect(20, 20, 780, 560); g.restore();
-    g.fillStyle = "#faf6ec"; g.fillRect(44, 44, 732, 512);
-    g.fillStyle = "#fffdf7"; g.fillRect(84, 84, 652, 432);
-    p.rect(84, 84, 652, 432, { alpha: 0.25 });
-    p.text("“", 140, 170, { size: 170, font: "Georgia, serif", weight: 700, color: C.ochre });
-    const h = p.paragraph(text, 410, 150, 520, { size: 38, font: "Georgia, 'Times New Roman', serif", weight: 400, align: "center", lh: 1.32, maxLines: 5 });
-    p.line(370, 172 + h, 450, 172 + h, { ink: C.granata, width: 3 });
-    p.text(author.toUpperCase(), 410, 212 + h, { size: 20, font: "sans", weight: 700, alpha: 0.7, maxWidth: 520 });
+  const QUOTE_SCHEMES = [
+    { frame: "#1f1f1f", mat: "#7b2232", paper: "#fbf3e2", ink: "#2b2b2b", accent: "#d9a23f", shape: "#2f5f8a" },
+    { frame: "#c99a3d", mat: "#f4e8d0", paper: "#2f5f8a", ink: "#fbf3e2", accent: "#f6cf5a", shape: "#e2574b" },
+    { frame: "#1f1f1f", mat: "#d9a23f", paper: "#fff8e6", ink: "#2b2b2b", accent: "#7b2232", shape: "#3e7c82" },
+    { frame: "#5c3a21", mat: "#f4e8d0", paper: "#2e5e4e", ink: "#f4e8d0", accent: "#f6cf5a", shape: "#c2562f" },
+    { frame: "#1f1f1f", mat: "#e2574b", paper: "#fff4ec", ink: "#2b2b2b", accent: "#2f5f8a", shape: "#d9a23f" },
+  ];
+  function quotePrint(text, author, scheme = 0) {
+    const S = QUOTE_SCHEMES[scheme % QUOTE_SCHEMES.length];
+    const k = canvas(820, 600), g = k.g, p = new Pen(g, { width: 2, jitter: 0.6, passes: 1, ink: S.ink });
+    g.save(); g.shadowColor = "rgba(40,25,10,0.35)"; g.shadowBlur = 16; g.shadowOffsetY = 8; g.fillStyle = S.frame; g.fillRect(20, 20, 780, 560); g.restore();
+    g.fillStyle = S.mat; g.fillRect(44, 44, 732, 512);
+    g.fillStyle = S.paper; g.fillRect(84, 84, 652, 432);
+    // a little Bauhaus composition in the corners
+    g.fillStyle = S.shape; g.globalAlpha = 0.9; g.beginPath(); g.arc(736, 516, 90, Math.PI, Math.PI * 1.5); g.lineTo(736, 516); g.fill();
+    g.fillStyle = S.accent; g.beginPath(); g.moveTo(84, 516); g.lineTo(84, 450); g.lineTo(150, 516); g.fill(); g.globalAlpha = 1;
+    p.text("“", 140, 170, { size: 170, font: "Georgia, serif", weight: 700, color: S.accent });
+    const h = p.paragraph(text, 410, 150, 520, { size: 38, font: "Georgia, 'Times New Roman', serif", weight: 400, align: "center", lh: 1.32, maxLines: 5, color: S.ink });
+    p.line(370, 172 + h, 450, 172 + h, { ink: S.accent, width: 4 });
+    p.text(author.toUpperCase(), 410, 212 + h, { size: 20, font: "sans", weight: 700, alpha: 0.8, maxWidth: 520, color: S.ink });
     return k;
   }
 

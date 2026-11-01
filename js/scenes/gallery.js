@@ -28,10 +28,10 @@ SCENES.gallery = class extends CORE.BaseScene {
     [[-16, 0.4], [16, 0.4]].forEach(([x]) => { const post = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 6), new THREE.MeshBasicMaterial({ color: 0x9a6b3f })); post.position.set(x, 3, -2.5); this.add(post); });
 
     // a rooftop wall behind the line, covered in graffiti
-    const wallG = plane(T.graffiti("BUILD · MEASURE · LEARN", { bg: "brick", w: 2048, h: 400, colors: ["#f6cf5a", "#e2574b", "#7b2232"], arrow: false }), 22, 4.3);
-    wallG.position.set(0, 1.9, -7.5); this.add(wallG);
-    const wallG2 = plane(T.graffiti("TORINO", { bg: "brick", w: 1024, h: 420, colors: ["#bfe3d6", "#3e7c82", "#2f5f8a"], rot: 0.03, tag: "AK" }), 9, 3.7);
-    wallG2.position.set(-15, 1.7, -6.4); wallG2.rotation.y = 0.5; this.add(wallG2);
+    [["STAY CURIOUS", ["#cdb6ec", "#7b5cc4", "#3b2a6b"]], ["TORINO", ["#bfe3d6", "#3e7c82", "#2f5f8a"]], ["BUILD · MEASURE · LEARN", ["#f6cf5a", "#e2574b", "#7b2232"]], ["SHIP IT", ["#ffd166", "#ef476f", "#7b2232"]], ["DATA > GUT", ["#b6dfad", "#3e7c82", "#2e5e4e"]]].forEach(([text, colors], i) => {
+      const wallG = plane(T.graffiti(text, { bg: "brick", w: 1536, h: 600, colors, arrow: false, tag: i === 2 ? "AK '26" : "AK" }), 12.02, 4.7);
+      wallG.position.set((i - 2) * 12, 2.35, -7.5); this.add(wallG);
+    });
 
     // posters: hackathon projects plus the newest repos from GitHub (two copies so the loop never shows a gap)
     const fromGitHub = GH.list.slice(0, D.gallery.githubCount ?? 5).map((r) => ({

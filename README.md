@@ -59,6 +59,13 @@ Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Dir
 
 ---
 
+## 🏡 Outside
+
+A modern house: charcoal cladding with a sprayed "HELLO", a cedar first floor cantilevered over the entrance, solar panels, a neon sign and the studio behind a glass wall. The garden has trees, grasses, lavender and path lights, with Turin on the hills behind, including the Mole Antonelliana and Superga.
+
+- **Click the street lamp** to switch between day and night. Night brings a moon, stars and lit windows, and the choice is remembered.
+- **Click the mailbox** to go straight to Contact.
+
 ## 🖼️ The corridor is a small museum
 
 Between the doors hang public-domain paintings in gilded frames, each with a museum label, plus typeset quotations from Drucker, Deming, Alan Kay and Van Gogh. Near the end there is a stretch of graffiti, and the Gallery rooftop and the Lab room are sprayed too. The graffiti is drawn in code, not copied from anyone.
@@ -143,7 +150,9 @@ index.html        page shell, HUD, overlays, paper tear
 styles.css        UI layer: torn-paper sheets, map, modal, sticky-note hints
 data.js           ← all the content
 js/sketch.js      pencil-line drawing helpers (Pen) + three.js glue
-js/art.js         every drawing: bricks, planks, tree, cat, doors, posters, avatar…
+js/art.js         every drawing: planks, doors, posters, paintings, graffiti, avatar…
+js/art-house.js   the house, garden, Turin skyline, moon, stars, birds
+js/audio.js       generated music and sound effects
 js/core.js        renderer, virtual scroll, raycasting, transitions, HUD
 js/github.js      live repo list for the Lab (GitHub API + cache + snapshot)
 js/cv.js          the CV folder: finds PDFs, renders them with pdf.js
