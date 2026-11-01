@@ -152,6 +152,9 @@ SCENES.home = class extends CORE.BaseScene {
     }
     this.flockPos = { x: -30, y: 11.4, z: -7 };
 
+    // a farewell sign at the end of the path, framed by the doorway as you leave
+    const bye = flat(T.farewellSign(D.meta.name.split(" ")[0]), 3.4, 2.12, [0, 1.06, 12.5], [0, Math.PI, 0]);
+
     // the street lamp is a light switch for the sky; the mailbox goes to Contact
     this.buildLamp([7.6, 0, 1.9]);
     this.buildMailbox([-2.9, 0, 1.7]);
@@ -295,7 +298,7 @@ SCENES.home = class extends CORE.BaseScene {
     flo(T.doodle("✱", 128, P.granata), 0.4, -2.1, 1.6, -6.2, { spin: 0.4 });
     flo(T.doodle("◌", 128, P.ochre), 0.3, -2.0, 3.3, -8.5, { spin: 0.3 });
 
-    for (let z = -2.5; z > -L; z -= 11) this.pendant(0, H, z, 0.8);
+    for (let z = -6; z > -L; z -= 11) this.pendant(0, H, z, 0.8);
 
     // doors: painted in the room's colour, hinged so they swing INTO the room
     const casingK = T.doorCasing(), arrowL = T.arrow(1), arrowR = T.arrow(-1);
@@ -371,6 +374,12 @@ SCENES.home = class extends CORE.BaseScene {
       onWall(T.museumLabel(pt.title, pt.artist, pt.year), 0.46, side, pt.z + right * (pt.w / 2 + 0.3), 1.85);
       this.pictureLight(side, pt.z, pt.w);
     });
+    // a banner across the hall just inside the door: welcome on the way in, thank-you on the way out
+    const bWelcome = SK.plane(T.banner("HELLO & WELCOME", "#2f5f8a", ["#bfe3d6", "#f6cf5a", "#ffd166"]), 4.3, 0.88);
+    bWelcome.position.set(0, 3.1, -0.98); this.add(bWelcome);
+    const bThanks = SK.plane(T.banner("THANK YOU FOR VISITING", "#7b2232"), 4.4, 0.95);
+    bThanks.position.set(0, 3.08, -1.02); bThanks.rotation.y = Math.PI; this.add(bThanks);
+    [-1.9, 1.9].forEach((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.25, 6), new THREE.MeshBasicMaterial({ color: "#2b2b2b" })); c.position.set(x, 3.6, -1.01); this.add(c); });
     // looking back towards the entrance: a hello on one side, a thank-you on the other
     const back = (k, w, x, y, h) => { const m = plane(k, w, h); m.position.set(x, y, -0.04); m.rotation.y = Math.PI; this.add(m); return m; };
     back(T.graffiti("HI", { w: 700, h: 900, colors: ["#ffd166", "#ef476f", "#7b2232"], tag: "AK", rot: -0.08 }), 1.15, -1.88, 2.2, 1.48);

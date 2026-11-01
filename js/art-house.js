@@ -361,5 +361,32 @@
     return k;
   }
 
-  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers, lampTag });
+  /* a fabric banner with graffiti lettering, hung from the ceiling on two cords */
+  function banner(text, cloth = "#7b2232", colors = ["#ffd166", "#f6a04d", "#ef476f"]) {
+    const w = 2048, h = 440, k = canvas(w, h), g = k.g;
+    g.save(); g.shadowColor = "rgba(0,0,0,0.3)"; g.shadowBlur = 18; g.shadowOffsetY = 10;
+    g.fillStyle = cloth; g.beginPath(); g.moveTo(20, 30); g.lineTo(w - 20, 30); g.lineTo(w - 20, h - 70);
+    for (let x = w - 20; x >= 20; x -= 64) g.quadraticCurveTo(x - 32, h - 20, x - 64, h - 70);
+    g.closePath(); g.fill(); g.restore();
+    const sh = g.createLinearGradient(0, 0, w, 0); [0, 0.2, 0.4, 0.6, 0.8, 1].forEach((t, i) => sh.addColorStop(t, i % 2 ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.06)")); g.fillStyle = sh; g.fillRect(20, 30, w - 40, h - 60);
+    g.fillStyle = "#c99a3d"; g.fillRect(10, 18, w - 20, 26); // brass rod
+    [80, w - 80].forEach((x) => { g.fillStyle = "#e9c96e"; g.beginPath(); g.arc(x, 31, 14, 0, TAU); g.fill(); });
+    const art = window.ART.graffiti(text, { w: 1900, h: 380, colors, tag: false, arrow: false });
+    g.drawImage(art.c, 74, 40);
+    return k;
+  }
+
+  /* a painted wooden farewell sign for the front garden */
+  function farewellSign(name) {
+    const k = canvas(1024, 640), g = k.g, p = new Pen(g, { width: 3, jitter: 1.1 });
+    [[300, 330], [724, 330]].forEach(([x]) => { p.rect(x - 22, 330, 44, 300, { fill: "#8a5a34" }); });
+    p.stroke([[60, 60], [964, 48], [976, 380], [48, 392]], true, { fill: "#e9d2a9" });
+    for (let i = 0; i < 9; i++) p.curve([[70, 90 + i * 34], [512 + R(-80, 80), 94 + i * 34], [950, 88 + i * 34]], false, { alpha: 0.18, width: 1.2, ink: "#7a5230" });
+    p.text("THANKS FOR VISITING", 512, 170, { size: 92, outline: 8, outlineColor: "#2b2b2b", color: "#ffd166", maxWidth: 840 });
+    p.text("come back soon  ♥", 512, 268, { size: 64, font: "hand", weight: 700, color: "#7b2232" });
+    p.text("— " + name, 760, 340, { size: 40, font: "hand", weight: 700, alpha: 0.75 });
+    return k;
+  }
+
+  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers, lampTag, banner, farewellSign });
 })();
