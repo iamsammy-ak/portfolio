@@ -256,13 +256,14 @@ SCENES.home = class extends CORE.BaseScene {
     if (!this.dog) return;
     const D = this.dog.userData, C = this.petCat.userData, K = this.kennel, H = this.catHouse;
     if (instant) {
-      if (on) { D.place(K.inside[0], K.inside[1], "sleep"); D.heading = Math.PI / 2 + 0.4; C.place(H.inside[0], H.inside[1], "sleep"); }
+      const out = (S) => Math.atan2(-(S.door[1] - S.inside[1]), S.door[0] - S.inside[0]); // facing out through the doorway
+      if (on) { D.place(K.inside[0], K.inside[1], "sleep"); D.heading = out(K); C.place(H.inside[0], H.inside[1], "sleep", out(H)); }
       else { D.place(2.7, 1.8, "sit"); D.heading = -Math.PI / 2; C.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.25); }
       return;
     }
     if (on) {
       setTimeout(() => D.toBed(K.door, K.inside), 400);
-      setTimeout(() => C.go([H.door, H.inside], () => { C.state = "sleep"; }), 900);
+      setTimeout(() => C.go([H.door, H.inside], () => { C.state = "sleep"; C.face = Math.atan2(-(H.door[1] - H.inside[1]), H.door[0] - H.inside[0]); }), 900);
     } else {
       setTimeout(() => D.wake(K.door, K.out), 600);
       setTimeout(() => C.go([H.door, this.catSpot], () => { C.state = "sit"; C.face = -Math.PI / 2 + 0.25; }), 1100);
@@ -331,8 +332,12 @@ SCENES.home = class extends CORE.BaseScene {
       this.add(m); this.fade.push(m); this.floaters.push(m); return m;
     };
     const titleM = plane(T.title(D.meta.short, D.meta.title), 4.6); titleM.position.set(-0.55, 2.55, -7.6); this.add(titleM); this.fade.push(titleM);
-    this.avatar = T.avatarRig(1.05); this.avatar.position.set(1.55, 1.05, -6.6); this.add(this.avatar);
-    this.avatar.userData.parts.forEach((m) => { m.userData.fz = -6.6; this.fade.push(m); });
+    // Abhishek as a figurine: walk past and the view turns with you (front, three-quarter, profile, back)
+    this.me = FIGURE.create(1.95); this.me.position.set(1.75, 0, -6.0); this.add(this.me);
+    this.me.userData.onClick = () => CORE.openBrief();
+    this.me.userData.onHover = (on) => { if (on) CORE.hint("ABHISHEK", "Walk round me · click for the one-page summary"); };
+    this.interactives.push(this.me);
+    const meLabel = plane(T.museumLabel("Abhishek Kumar", "Engineering Management · PoliTo", "Your host today"), 0.5); meLabel.position.set(W / 2 - 0.02, 1.5, -5.0); meLabel.rotation.y = -Math.PI / 2; this.add(meLabel);
     flo(T.planeSketch(), 0.95, -2.0, 3.0, -5.6, { rz: 0.3, amp: 0.1 });
     flo(T.paperBall(), 0.45, -1.9, 0.25, -5, { amp: 0.0 });
     flo(T.pencil(), 0.9, 1.6, 0.14, -5.2, { rz: 0.5, amp: 0.0 });
@@ -642,7 +647,7 @@ SCENES.home = class extends CORE.BaseScene {
     // …and the big name steps aside when you turn to look at the walls
     const turned = smooth(0.35, 0.9, Math.abs(Math.sin(this.yaw.v)));
     this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = (1 - smooth(-1.0, 0.4, d)) * (1 - turned * 0.92); });
-    this.avatar.userData.tick(t);
+    if (z > -14) this.me.userData.update(cam.position, dt);
     this.floaters.forEach((m) => { const b = m.userData.base; m.position.y = b[1] + Math.sin(t * 1.4 + m.userData.ph) * m.userData.amp; if (m.userData.spin) m.rotation.z += dt * m.userData.spin; });
     this.arrows.forEach((a) => { if (a.visible) a.position.z = a.userData.base[2] + Math.sin(t * 5) * 0.05 * (a.scale.x); });
   }

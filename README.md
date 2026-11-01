@@ -67,6 +67,10 @@ The original brick house, rebuilt from 3D parts. It has a tiled pitched roof wit
 - **Click the mailbox** to go straight to Contact.
 - **Sofia**, a German Shepherd, sits by the door. Click her and she barks, gets up and wanders the garden. **Luna** the cat sits by the mailbox and follows your cursor. At night both walk to their shelters, a kennel with SOFIA over the door and a little house marked LUNA, and sleep until morning. Both are real 3D models with cartoon shading.
 
+## 🧍 The figurine
+
+In the corridor and at the centre of the Office stands a figurine of Abhishek, made from four renders in `assets/me/`: front, three-quarter, profile and back. Like a 360° product viewer, it shows the view that matches where you stand and cross-fades as you walk round it or spin the Office screens. Clicking it opens the one-page summary. To update it, replace the four images and keep their names.
+
 ## 🖼️ The corridor is a small museum
 
 Between the doors hang public-domain paintings in gilded frames, each with a museum label, plus typeset quotations from Drucker, Deming, Alan Kay and Van Gogh. Near the end there is a stretch of graffiti, and the Gallery rooftop and the Lab room are sprayed too. The graffiti is drawn in code, not copied from anyone.
@@ -167,7 +171,8 @@ data.js           ← all the content
 js/sketch.js      pencil-line drawing helpers (Pen) + three.js glue
 js/art.js         every drawing: planks, doors, posters, paintings, graffiti, avatar…
 js/art-house.js   house materials, garden, Turin skyline, moon, stars, birds
-js/pets.js        Sofia the German Shepherd and the cat, in 3D
+js/pets.js        Sofia the German Shepherd, Luna the cat and their shelters, in 3D
+js/figure.js      the 360° figurine built from the four renders in assets/me/
 js/audio.js       generated music and sound effects
 js/core.js        renderer, virtual scroll, raycasting, transitions, HUD
 js/github.js      live repo list for the Lab (GitHub API + cache + snapshot)

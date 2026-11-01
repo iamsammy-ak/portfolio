@@ -55,7 +55,8 @@ window.PETS = (() => {
     // walk a list of points; then call done()
     u.go = (points, next) => { u.path = points.slice(); u.after = next; u.state = "walk"; [u.tx, u.tz] = u.path.shift(); };
     u.bark = () => { if (u.state === "sit") { u.state = "idle"; u.timer = 0.6; } };
-    u.toBed = (door, inside) => { if (u.state === "sleep" || u.state === "bed") return; u.state = "bed"; u.go([door, inside], () => { u.state = "sleep"; }); u.state = "walk"; u.bedTrip = true; };
+    // walk in, then turn round to lie facing the door
+    u.toBed = (door, inside) => { if (u.state === "sleep" || u.state === "bed") return; u.state = "bed"; u.go([door, inside], () => { u.heading = Math.atan2(-(door[1] - inside[1]), door[0] - inside[0]); u.state = "sleep"; }); u.state = "walk"; u.bedTrip = true; };
     u.wake = (door, out) => { if (u.state !== "sleep" && !u.bedTrip) return; u.bedTrip = false; u.go([door, out], () => { u.state = "sit"; }); };
     u.place = (x, z, state) => { u.x = u.tx = x; u.z = u.tz = z; u.state = state; u.path = []; u.bedTrip = state === "sleep"; u.sit = state === "sit" ? 1 : 0; u.lie = state === "sleep" ? 1 : 0; };
     u.tick = (t, dt, ctx) => {

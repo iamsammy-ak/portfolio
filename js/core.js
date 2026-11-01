@@ -511,5 +511,5 @@ window.CORE = (() => {
     else if (SCENES[want] && want !== "home") go(want);
   }
 
-  return { app, BaseScene, go, hint, unlock, sound, modal, boot, pushRoom, setNight };
+  return { app, BaseScene, go, hint, unlock, sound, modal, boot, pushRoom, setNight, openBrief: () => openBrief() };
 })();

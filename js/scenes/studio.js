@@ -20,7 +20,7 @@ SCENES.studio = class extends CORE.BaseScene {
       m.userData.onHover = (on) => gsap.to(m.scale, { x: on ? 1.08 : 1, y: on ? 1.08 : 1, duration: 0.3 });
       this.cluster.add(m); this.interactives.push(m);
     });
-    const av = plane(T.avatar(false), 1.1); av.position.set(0, -0.2, 0); this.cluster.add(av);
+    this.me = FIGURE.create(2.5); this.me.position.set(0, -1.45, 0.2); this.cluster.add(this.me);
     const glyphs = ["</>", "{ }", "∑", "0101", "SQL", "β", "Δ", "✎", "⌘", "λ", "π", "∞"];
     const ring = new THREE.Group(); this.cluster.add(ring); this.ring = ring;
     const P = SK.PAL, inks = [P.coral, P.blue, P.sunDeep, P.leafDark, P.lilac];
@@ -47,6 +47,7 @@ SCENES.studio = class extends CORE.BaseScene {
     const k = 1 - Math.pow(0.002, dt);
     this.rot.y = SK.lerp(this.rot.y, this.target.y, k); this.rot.x = SK.lerp(this.rot.x, this.target.x, k);
     this.cluster.rotation.set(this.rot.x, this.rot.y, 0);
+    this.cluster.updateMatrixWorld(); this.me.userData.update(this.camera.position, dt, this.rot.y, this.rot.y);
     this.ring.rotation.y = -this.rot.y * 0.4;
     // screens always face you so they stay readable while the cluster turns
     this.cluster.updateMatrixWorld();
