@@ -138,12 +138,26 @@ SCENES.home = class extends CORE.BaseScene {
     // Sofia the German Shepherd paces by the door; the cat sits and watches you. Real 3D, toon-lit.
     this.hemi = new THREE.HemisphereLight("#fff6e8", "#6b7d5a", 1.15); this.scene.add(this.hemi);
     this.sunLight = new THREE.DirectionalLight("#ffffff", 1.1); this.sunLight.position.set(4, 9, 7); this.scene.add(this.sunLight);
+    // their shelters: a kennel for Sofia, a little house for Luna. At night they go in and sleep.
+    const at = (g, x, z, ry) => { g.position.set(x, 0, z); g.rotation.y = ry; this.add(g); const d = g.userData.door, s = g.scale.x; return { door: [x + Math.sin(ry) * d * s, z + Math.cos(ry) * d * s], inside: [x, z] }; };
+    const kennel = PETS.shelter({ w: 1.25, h: 0.9, d: 1.35, wall: "#b9825a", roof: "#7b2232", name: "SOFIA" }); kennel.scale.setScalar(1.08);
+    this.kennel = at(kennel, 6.1, 2.0, -0.35); this.kennel.out = [5.0, 2.9];
+    const catHouse = PETS.shelter({ w: 0.75, h: 0.55, d: 0.8, wall: "#3e7c82", roof: "#d9a23f", name: "LUNA", round: true }); catHouse.scale.setScalar(1.15);
+    this.catHouse = at(catHouse, -4.5, 2.1, 0.4); this.catSpot = [-2.15, 1.6];
+    const zzz = () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: SK.tex(T.zzz()), depthWrite: false, transparent: true, opacity: 0 })); s.scale.set(0.9, 0.6, 1); this.add(s); return s; };
+    this.zDog = zzz(); this.zDog.position.set(6.1, 2.1, 2.1); this.zCat = zzz(); this.zCat.position.set(-4.5, 1.35, 2.2);
+
     this.dog = PETS.dog("Sofia"); this.add(this.dog); this.interactives.push(this.dog);
-    this.dog.userData.onClick = () => { CORE.sound("woof"); gsap.to(this.dog.position, { y: 0.3, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }); this.dog.userData.state = "idle"; this.dog.userData.timer = 2.5; };
-    this.dog.userData.onHover = (on) => { if (on) CORE.hint("SOFIA", "Sofia, the German Shepherd · click to say hi"); };
-    this.petCat = PETS.cat(); this.petCat.position.set(-2.15, 0.0, 1.55); this.petCat.rotation.y = -Math.PI / 2 + 0.25; this.add(this.petCat); this.interactives.push(this.petCat);
-    this.petCat.userData.onClick = () => { CORE.sound("meow"); gsap.to(this.petCat.scale, { y: 1.4, duration: 0.15, yoyo: true, repeat: 1 }); };
-    this.petCat.userData.onHover = (on) => { if (on) CORE.hint("THE CAT", "Click the cat · it follows your cursor"); };
+    this.dog.userData.onClick = () => {
+      const u = this.dog.userData;
+      if (u.state === "sleep") { CORE.hint("SOFIA", "Sofia is asleep in her kennel · she will be out in the morning"); return; }
+      CORE.sound("woof"); gsap.to(this.dog.position, { y: 0.25, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" });
+      if (u.state === "sit") { u.bark(); CORE.hint("SOFIA", "Woof! Sofia is up and about"); }
+    };
+    this.dog.userData.onHover = (on) => { if (on) CORE.hint("SOFIA", this.dog.userData.state === "sleep" ? "Sofia is asleep" : "Sofia, the German Shepherd · click her and she barks"); };
+    this.petCat = PETS.cat(); this.petCat.userData.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.25); this.add(this.petCat); this.interactives.push(this.petCat);
+    this.petCat.userData.onClick = () => { if (this.petCat.userData.state === "sleep") { CORE.hint("LUNA", "Luna is curled up asleep"); return; } CORE.sound("meow"); gsap.to(this.petCat.scale, { y: 2.1, duration: 0.15, yoyo: true, repeat: 1 }); };
+    this.petCat.userData.onHover = (on) => { if (on) CORE.hint("LUNA", this.petCat.userData.state === "sleep" ? "Luna is asleep" : "Luna the cat · she follows your cursor"); };
 
     // sun, moon, clouds and a flapping flock
     const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(3.2, 12.9, -6); sunM.scale.setScalar(0.85); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
@@ -237,7 +251,26 @@ SCENES.home = class extends CORE.BaseScene {
     super.applyNight(on, instant);
   }
 
+  /* at night Sofia and Luna walk to their shelters and sleep; in the morning they come back out */
+  petsNight(on, instant) {
+    if (!this.dog) return;
+    const D = this.dog.userData, C = this.petCat.userData, K = this.kennel, H = this.catHouse;
+    if (instant) {
+      if (on) { D.place(K.inside[0], K.inside[1], "sleep"); D.heading = Math.PI / 2 + 0.4; C.place(H.inside[0], H.inside[1], "sleep"); }
+      else { D.place(2.7, 1.8, "sit"); D.heading = -Math.PI / 2; C.place(this.catSpot[0], this.catSpot[1], "sit", -Math.PI / 2 + 0.25); }
+      return;
+    }
+    if (on) {
+      setTimeout(() => D.toBed(K.door, K.inside), 400);
+      setTimeout(() => C.go([H.door, H.inside], () => { C.state = "sleep"; }), 900);
+    } else {
+      setTimeout(() => D.wake(K.door, K.out), 600);
+      setTimeout(() => C.go([H.door, this.catSpot], () => { C.state = "sit"; C.face = -Math.PI / 2 + 0.25; }), 1100);
+    }
+  }
+
   setNight(on, instant) {
+    this.petsNight(on, instant);
     const N = this.nightKit, d = instant ? 0 : 1.6, k = { v: this.night };
     const dayTint = new THREE.Color("#ffffff"), nightTint = new THREE.Color("#6a76a6"), fogDay = new THREE.Color("#e4edf2"), fogNight = new THREE.Color("#1c2547");
     gsap.to(k, {
@@ -384,11 +417,11 @@ SCENES.home = class extends CORE.BaseScene {
       this.pictureLight(side, pt.z, pt.w);
     });
     // a banner across the hall just inside the door: welcome on the way in, thank-you on the way out
-    const bWelcome = SK.plane(T.banner("HELLO & WELCOME", "#2f5f8a", ["#bfe3d6", "#f6cf5a", "#ffd166"]), 4.3, 0.88);
-    bWelcome.position.set(0, 3.1, -0.98); this.add(bWelcome);
-    const bThanks = SK.plane(T.banner("THANK YOU FOR VISITING", "#7b2232"), 4.4, 0.95);
-    bThanks.position.set(0, 3.08, -1.02); bThanks.rotation.y = Math.PI; this.add(bThanks);
-    [-1.9, 1.9].forEach((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.25, 6), new THREE.MeshBasicMaterial({ color: "#2b2b2b" })); c.position.set(x, 3.6, -1.01); this.add(c); });
+    const bWelcome = SK.plane(T.banner("HELLO & WELCOME", "#2f5f8a", ["#bfe3d6", "#f6cf5a", "#ffd166"]), 3.1, 0.66);
+    bWelcome.position.set(0, 2.98, -3.48); this.add(bWelcome);
+    const bThanks = SK.plane(T.banner("THANK YOU FOR VISITING", "#7b2232"), 3.2, 0.69);
+    bThanks.position.set(0, 2.97, -3.52); bThanks.rotation.y = Math.PI; this.add(bThanks);
+    [-1.35, 1.35].forEach((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.45, 6), new THREE.MeshBasicMaterial({ color: "#2b2b2b" })); c.position.set(x, 3.48, -3.5); this.add(c); });
     // looking back towards the entrance: a hello on one side, a thank-you on the other
     const back = (k, w, x, y, h) => { const m = plane(k, w, h); m.position.set(x, y, -0.04); m.rotation.y = Math.PI; this.add(m); return m; };
     back(T.graffiti("HI", { w: 700, h: 900, colors: ["#ffd166", "#ef476f", "#7b2232"], tag: "AK", rot: -0.08 }), 1.15, -1.88, 2.2, 1.48);
@@ -597,8 +630,13 @@ SCENES.home = class extends CORE.BaseScene {
       // a small flock flaps across the sky in a loose V
       const F = this.flockPos; F.x += dt * 1.6; F.y += Math.sin(t * 0.5) * 0.004; if (F.x > 34) { F.x = -34; F.y = 12.8 + Math.random() * 1.5; }
       this.flock.forEach((b) => { const u = b.userData; b.position.set(F.x + u.off[1] * 1.6, F.y + Math.abs(u.off[0]) * 0.25 + Math.sin(t * 2 + u.ph) * 0.06, F.z + u.off[0]); const flap = Math.sin(t * 9 + u.ph) > 0; b.material.map = flap ? u.up : u.down; b.lookAt(cam.position); });
-      const ctx = { cam: cam.position, pointer: this.app.pointer, minX: 1.9, maxX: 4.3 };
+      const ctx = { cam: cam.position, pointer: this.app.pointer, roam: [1.9, 4.3, 1.6, 2.4] };
       this.dog.userData.tick(t, dt, ctx); this.petCat.userData.tick(t, dt, ctx);
+      [[this.zDog, this.dog], [this.zCat, this.petCat]].forEach(([z, pet], i) => {
+        const on = pet.userData.state === "sleep";
+        z.material.opacity = SK.lerp(z.material.opacity, on ? 0.9 : 0, 1 - Math.pow(0.05, dt));
+        z.position.y = (i ? 1.35 : 2.1) + ((t * 0.25 + i * 0.5) % 1) * 0.4;
+      });
     }
     // things near the entrance fade out as you walk through them
     // …and the big name steps aside when you turn to look at the walls

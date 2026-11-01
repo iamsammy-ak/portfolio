@@ -65,7 +65,7 @@ The original brick house, rebuilt from 3D parts. It has a tiled pitched roof wit
 
 - **Click the street lamp** to switch between day and night. Night brings a moon, stars and lit windows, and the choice is remembered.
 - **Click the mailbox** to go straight to Contact.
-- **Sofia**, a German Shepherd, paces by the door and stops to look at you. Click her and she barks. The cat sits by the mailbox and follows your cursor. Both are real 3D models with cartoon shading.
+- **Sofia**, a German Shepherd, sits by the door. Click her and she barks, gets up and wanders the garden. **Luna** the cat sits by the mailbox and follows your cursor. At night both walk to their shelters, a kennel with SOFIA over the door and a little house marked LUNA, and sleep until morning. Both are real 3D models with cartoon shading.
 
 ## 🖼️ The corridor is a small museum
 

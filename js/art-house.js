@@ -388,5 +388,10 @@
     return k;
   }
 
-  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers, lampTag, banner, farewellSign });
+  function zzz() {
+    const k = canvas(256, 170), g = k.g; g.textBaseline = "middle"; g.lineJoin = "round";
+    [["z", 40, 130, 48], ["Z", 110, 92, 64], ["Z", 190, 50, 80]].forEach(([c, x, y, sz]) => { g.font = "700 " + sz + "px 'Gloria Hallelujah', cursive"; g.lineWidth = 8; g.strokeStyle = "#1c2240"; g.strokeText(c, x, y); g.fillStyle = "#f6f1d8"; g.fillText(c, x, y); });
+    return k;
+  }
+  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers, lampTag, banner, farewellSign, zzz });
 })();
