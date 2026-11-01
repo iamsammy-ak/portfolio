@@ -23,6 +23,7 @@ window.AUDIO = (() => {
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
     conv.buffer = ir; wet = ctx.createGain(); wet.gain.value = 0.3; conv.connect(wet); wet.connect(master); wet.input = conv;
     document.addEventListener("visibilitychange", () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (on) ctx.resume(); });
+    setTimeout(loadSamples, 0);
     return ctx;
   }
 
@@ -103,10 +104,28 @@ window.AUDIO = (() => {
     day(t) { osc("square", 2200, t, 0.015, 0.04, sfxBus); [523, 660, 880].forEach((f, i) => osc("sine", f, t + 0.06 + i * 0.11, 0.8, 0.04, wet.input)); },
   };
 
+  /* real recordings for the pets (free-licence files from Wikimedia Commons); the
+     synthesised versions above stay as a fallback until they load or if a browser can't decode them */
+  const SAMPLES = { woof: { url: "assets/audio/dog-bark.ogg", max: 1.6 }, meow: { url: "assets/audio/cat-meow.wav", max: 1.6 } };
+  function loadSamples() {
+    Object.values(SAMPLES).forEach((smp) => {
+      if (smp.buf || smp.loading) return; smp.loading = true;
+      fetch(smp.url).then((r) => r.arrayBuffer()).then((a) => ctx.decodeAudioData(a)).then((b) => (smp.buf = b)).catch(() => {});
+    });
+  }
+  function playSample(smp, t) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = smp.buf;
+    const dur = Math.min(smp.buf.duration, smp.max);
+    g.gain.setValueAtTime(0.9, t); g.gain.setValueAtTime(0.9, t + dur - 0.15); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    s.connect(g); g.connect(sfxBus); s.start(t, 0, dur);
+  }
+
   function sound(kind) {
     if (!on || !init()) return;
     if (ctx.state === "suspended") ctx.resume();
-    try { (FX[kind] || FX.click)(ctx.currentTime + 0.01); } catch (_) {}
+    loadSamples();
+    const t = ctx.currentTime + 0.01;
+    try { if (SAMPLES[kind] && SAMPLES[kind].buf) playSample(SAMPLES[kind], t); else (FX[kind] || FX.click)(t); } catch (_) {}
   }
 
   /* ---------- music: one generative piece per room ---------- */

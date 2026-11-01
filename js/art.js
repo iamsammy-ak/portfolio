@@ -445,29 +445,47 @@ window.ART = (() => {
       p.line(214, 262, 226, 470, { width: 2.2, ink: "#1a1d2e", passes: 1 }); p.line(298, 262, 286, 470, { width: 2.2, ink: "#1a1d2e", passes: 1 });
       [[226, 430], [286, 430], [226, 500], [286, 500]].forEach(([x, y]) => p.circle(x, y, 6, { fill: "#15161f", passes: 1 }));
       p.line(198, 560, 236, 562, { width: 2.4, ink: "#1a1d2e", passes: 1 }); p.line(276, 562, 314, 560, { width: 2.4, ink: "#1a1d2e", passes: 1 });
-      // neck + ears + head
-      p.stroke([[234, 214], [278, 214], [284, 264], [228, 264]], true, { fill: SKIN });
-      p.circle(182, 152, 12, { fill: SKIN }); p.circle(330, 152, 12, { fill: SKIN });
-      p.circle(256, 148, 74, { fill: SKIN });
-      // beard + moustache
-      p.curve([[192, 166], [200, 206], [226, 234], [256, 242], [286, 234], [312, 206], [320, 166], [302, 194], [256, 206], [210, 194]], true, { fill: HAIR, passes: 1, alpha: 0.95 });
-      p.curve([[232, 180], [256, 173], [280, 180], [268, 188], [244, 188]], true, { fill: HAIR, passes: 1 });
-      p.curve([[240, 204], [256, 211], [272, 204]], false, { width: 2, ink: "#d9a98b", passes: 1 });
-      // eyes + brows + nose
-      p.ellipse(232, 148, 7, 5, { fill: "#1d1a18", passes: 1 }); p.ellipse(280, 148, 7, 5, { fill: "#1d1a18", passes: 1 });
-      p.curve([[218, 134], [232, 128], [248, 133]], false, { width: 4, ink: HAIR, passes: 1 }); p.curve([[264, 133], [280, 128], [294, 134]], false, { width: 4, ink: HAIR, passes: 1 });
-      p.curve([[256, 150], [250, 168], [258, 172]], false, { width: 1.8, passes: 1 });
-      // wavy hair: back mass, then a messy fringe over the forehead
-      p.puff(256, 72, 92, 50, 10, { fill: HAIR, passes: 1 });
-      p.puff(206, 96, 36, 20, 5, { fill: HAIR, passes: 1 }); p.puff(306, 94, 38, 20, 5, { fill: HAIR, passes: 1 }); p.puff(256, 84, 34, 22, 5, { fill: HAIR, passes: 1 });
-      for (let i = 0; i < 7; i++) p.curve([[190 + i * 22, 50 + (i % 2) * 8], [196 + i * 22, 74], [188 + i * 22, 98]], false, { width: 1.6, ink: "#4a403a", alpha: 0.6, passes: 1 });
+      // neck + ears + head (a slightly long oval face, warm brown skin)
+      const SKIN2 = "#a8714e";
+      p.stroke([[232, 210], [280, 210], [286, 264], [226, 264]], true, { fill: SKIN });
+      p.ellipse(181, 156, 11, 17, { fill: SKIN }); p.ellipse(331, 156, 11, 17, { fill: SKIN });
+      p.circle(181, 172, 3, { fill: "#d9c27a", passes: 1, width: 0.8 }); // the small earring
+      p.ellipse(256, 150, 70, 82, { fill: SKIN });
+      // soft shading down the sides of the face
+      k.g.save(); k.g.globalAlpha = 0.28; k.g.fillStyle = SKIN2; k.g.beginPath(); k.g.ellipse(198, 160, 14, 54, 0.1, 0, Math.PI * 2); k.g.fill(); k.g.beginPath(); k.g.ellipse(314, 160, 14, 54, -0.1, 0, Math.PI * 2); k.g.fill(); k.g.restore();
+      // trimmed beard along the jaw and chin, joined to a full moustache
+      p.curve([[190, 160], [192, 196], [212, 224], [238, 240], [256, 244], [274, 240], [300, 224], [320, 196], [322, 160], [310, 186], [292, 200], [274, 196], [256, 198], [238, 196], [220, 200], [202, 186]], true, { fill: HAIR, passes: 1, alpha: 0.96 });
+      for (let n = 0; n < 60; n++) { const a = Math.random() * Math.PI, rr = 60 + Math.random() * 10; p.circle(256 + Math.cos(a) * rr * 0.95, 172 + Math.sin(a) * rr * 0.62, 1.2, { fill: HAIR, passes: 1, width: 0.4, alpha: 0.5 }); }
+      p.curve([[226, 186], [242, 178], [256, 180], [270, 178], [286, 186], [276, 194], [256, 190], [236, 194]], true, { fill: HAIR, passes: 1 });
+      // lips peeking through the beard
+      p.curve([[240, 200], [256, 196], [272, 200], [266, 207], [256, 209], [246, 207]], true, { fill: "#8f4f43", passes: 1, width: 1 });
+      // eyes: whites, brown irises, a glint; heavy dark brows
+      [[230, 146], [282, 146]].forEach(([x, y]) => {
+        p.curve([[x - 14, y], [x - 4, y - 7], [x + 10, y - 5], [x + 14, y + 1], [x + 2, y + 5], [x - 10, y + 4]], true, { fill: "#f6f1ea", passes: 1, width: 1.2 });
+        p.circle(x, y - 0.5, 5.6, { fill: "#4a2e1d", passes: 1, width: 0.6 }); p.circle(x, y - 0.5, 2.6, { fill: "#140d09", passes: 1, width: 0.4 });
+        p.circle(x + 2, y - 2.5, 1.3, { fill: "#ffffff", passes: 1, width: 0.2 });
+        p.curve([[x - 15, y - 1], [x - 4, y - 9], [x + 12, y - 7], [x + 16, y - 1]], false, { width: 2.2, ink: "#1d1410", passes: 1 });
+      });
+      p.stroke([[212, 128], [228, 122], [248, 126], [248, 132], [228, 129], [214, 133]], true, { fill: HAIR, passes: 1 });
+      p.stroke([[264, 126], [284, 122], [300, 128], [298, 133], [284, 129], [264, 132]], true, { fill: HAIR, passes: 1 });
+      // nose
+      p.curve([[252, 140], [250, 166], [244, 174], [252, 178], [262, 178], [268, 174]], false, { width: 1.8, ink: "#7b4a32", passes: 1 });
+      // tight black curls: a full crown, shorter at the sides
+      p.ellipse(256, 88, 84, 46, { fill: HAIR, passes: 1 });
+      p.stroke([[178, 140], [176, 104], [196, 82], [200, 128]], true, { fill: HAIR, passes: 1 }); p.stroke([[334, 140], [336, 104], [316, 82], [312, 128]], true, { fill: HAIR, passes: 1 });
+      const curls = [];
+      for (let n = 0; n < 70; n++) { const a = Math.PI + Math.random() * Math.PI, rr = Math.sqrt(Math.random()); curls.push([256 + Math.cos(a) * 88 * rr, 104 + Math.sin(a) * 66 * rr]); }
+      for (let n = 0; n < 12; n++) curls.push([200 + n * 10 + Math.random() * 6, 106 + Math.random() * 10]); // the fringe
+      curls.forEach(([x, y]) => { p.circle(x, y, 7 + Math.random() * 5, { fill: HAIR, passes: 1, width: 1, ink: "#0e0b0a" }); p.curve([[x - 4, y - 2], [x, y - 5], [x + 4, y - 2]], false, { width: 1.2, ink: "#5a4e48", alpha: 0.7, passes: 1 }); });
     }
     if (part !== "body" && waving) {
       const armR = [[352, 300], [392, 318], [430, 230], [468, 150], [440, 136], [404, 210], [364, 280]];
       p.stroke(armR, true, { fill: SUIT }); pin(armR);
       p.stroke([[438, 156], [466, 168], [474, 150], [446, 138]], true, { fill: "#f7f7f4", passes: 1 });
       p.circle(458, 128, 24, { fill: SKIN });
-      p.text("hi!", 400, 66, { size: 40, font: "hand", weight: 700, rotate: 0.2, color: "#d2514a" });
+      // a speech bubble: hello!
+      p.rrect(330, 28, 150, 62, 26, { fill: "#fffdf7", width: 2 }); p.stroke([[372, 88], [356, 112], [392, 88]], true, { fill: "#fffdf7", width: 2 });
+      p.text("Hello!", 405, 60, { size: 40, font: "hand", weight: 700, rotate: -0.05, color: "#d2514a" });
     }
     return k;
   }

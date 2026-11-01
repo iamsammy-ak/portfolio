@@ -332,12 +332,8 @@ SCENES.home = class extends CORE.BaseScene {
       this.add(m); this.fade.push(m); this.floaters.push(m); return m;
     };
     const titleM = plane(T.title(D.meta.short, D.meta.title), 4.6); titleM.position.set(-0.55, 2.55, -7.6); this.add(titleM); this.fade.push(titleM);
-    // Abhishek as a figurine: walk past and the view turns with you (front, three-quarter, profile, back)
-    this.me = FIGURE.create(1.95); this.me.position.set(1.75, 0, -6.0); this.add(this.me);
-    this.me.userData.onClick = () => CORE.openBrief();
-    this.me.userData.onHover = (on) => { if (on) CORE.hint("ABHISHEK", "Walk round me · click for the one-page summary"); };
-    this.interactives.push(this.me);
-    const meLabel = plane(T.museumLabel("Abhishek Kumar", "Engineering Management · PoliTo", "Your host today"), 0.5); meLabel.position.set(W / 2 - 0.02, 1.5, -5.0); meLabel.rotation.y = -Math.PI / 2; this.add(meLabel);
+    this.avatar = T.avatarRig(1.05); this.avatar.position.set(1.55, 1.05, -6.6); this.add(this.avatar);
+    this.avatar.userData.parts.forEach((m) => { m.userData.fz = -6.6; this.fade.push(m); });
     flo(T.planeSketch(), 0.95, -2.0, 3.0, -5.6, { rz: 0.3, amp: 0.1 });
     flo(T.paperBall(), 0.45, -1.9, 0.25, -5, { amp: 0.0 });
     flo(T.pencil(), 0.9, 1.6, 0.14, -5.2, { rz: 0.5, amp: 0.0 });
@@ -647,7 +643,7 @@ SCENES.home = class extends CORE.BaseScene {
     // …and the big name steps aside when you turn to look at the walls
     const turned = smooth(0.35, 0.9, Math.abs(Math.sin(this.yaw.v)));
     this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = (1 - smooth(-1.0, 0.4, d)) * (1 - turned * 0.92); });
-    if (z > -14) this.me.userData.update(cam.position, dt);
+    this.avatar.userData.tick(t);
     this.floaters.forEach((m) => { const b = m.userData.base; m.position.y = b[1] + Math.sin(t * 1.4 + m.userData.ph) * m.userData.amp; if (m.userData.spin) m.rotation.z += dt * m.userData.spin; });
     this.arrows.forEach((a) => { if (a.visible) a.position.z = a.userData.base[2] + Math.sin(t * 5) * 0.05 * (a.scale.x); });
   }
