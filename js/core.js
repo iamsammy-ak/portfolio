@@ -14,6 +14,8 @@ window.CORE = (() => {
   };
   try { app.ach = new Set(JSON.parse(localStorage.getItem("ak_ach") || "[]")); } catch (_) {}
   try { app.audio = localStorage.getItem("ak_audio") !== "off"; } catch (_) {}
+  app.night = false;
+  try { app.night = localStorage.getItem("ak_night") === "1"; } catch (_) {}
 
   /* ---------- base scene ---------- */
   class BaseScene {
@@ -44,6 +46,38 @@ window.CORE = (() => {
       document.body.classList.toggle("is-pointer", !!obj);
     }
     resize(w, h) { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+    /* night: tint every surface, swap the sky, light up the stars. Scenes can
+       set outdoor, nightTint, nightBg and nightSkip (a Set of materials to leave alone). */
+    applyNight(on, instant) {
+      if (!this._nm) {
+        this._nm = [];
+        const skip = this.nightSkip || new Set();
+        this.scene.traverse((o) => [].concat(o.material || []).forEach((m) => { if (m && m.color && m.blending !== THREE.AdditiveBlending && !skip.has(m) && !this._nm.includes(m)) this._nm.push(m); }));
+        this._dayBg = this.scene.background;
+        if (this.outdoor) {
+          this._nightBg = this.nightBg || SK.gradientTex("#0b1430", "#3a3f6a", "#1f2d58");
+          const st = SK.plane(ART.stars(), 260, 110, { fog: false }); st.position.set(0, 40, -110); st.material.opacity = 0; st.material.depthWrite = false; this.scene.add(st);
+          const mo = SK.plane(ART.moon(), 7, undefined, { fog: false }); mo.position.set(14, 26, -100); mo.material.opacity = 0; mo.material.depthWrite = false; this.scene.add(mo);
+          this._nightSky = [st, mo];
+        } else this._nightBg = this.nightBg || null;
+        this._dayFog = this.scene.fog ? this.scene.fog.color.clone() : null;
+      }
+      const tint = new THREE.Color(this.nightTint || (this.outdoor ? "#7c86b8" : "#a99c8a")), white = new THREE.Color(1, 1, 1);
+      const fogNight = new THREE.Color(this.outdoor ? "#1a2244" : "#2c2a30");
+      const k = { v: this._nk || 0 };
+      gsap.to(k, {
+        v: on ? 1 : 0, duration: instant ? 0 : 1.4, ease: "power2.inOut", overwrite: true,
+        onUpdate: () => {
+          this._nk = k.v;
+          const mul = white.clone().lerp(tint, k.v);
+          this._nm.forEach((m) => { m.userData.dayColor = m.userData.dayColor || m.color.clone(); m.color.copy(m.userData.dayColor).multiply(mul); });
+          (this._nightSky || []).forEach((m) => (m.material.opacity = k.v));
+          if (this._dayFog && this.scene.fog) this.scene.fog.color.copy(this._dayFog).lerp(fogNight, k.v);
+          if (this._nightBg) this.scene.background = k.v > 0.5 ? this._nightBg : this._dayBg;
+          else if (this._dayBg && this._dayBg.isColor) this.scene.background = this._dayBg.clone().lerp(new THREE.Color("#262a3a"), k.v);
+        },
+      });
+    }
     dispose() {
       this.scene.traverse((o) => {
         if (o.geometry) o.geometry.dispose();
@@ -250,7 +284,42 @@ window.CORE = (() => {
 
   function setAudio(on) {
     app.audio = on; $("#btnAudio").classList.toggle("is-off", !on); AUDIO.setOn(on);
+    $("#soundOn")?.setAttribute("aria-checked", on);
     try { localStorage.setItem("ak_audio", on ? "on" : "off"); } catch (_) {}
+  }
+
+  /* ---------- day and night, for the whole site ---------- */
+  function setNight(on, instant) {
+    app.night = !!on;
+    try { localStorage.setItem("ak_night", on ? "1" : "0"); } catch (_) {}
+    app.current?.applyNight?.(app.night, instant);
+    AUDIO.setNight(app.night);
+    if (!instant) sound(on ? "night" : "day");
+    document.querySelectorAll("#soundPanel [data-night]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.night === (on ? "1" : "0"))));
+    document.body.classList.toggle("is-night", app.night);
+  }
+
+  /* ---------- sound & light panel ---------- */
+  function bindSoundPanel() {
+    const panel = $("#soundPanel"), V = AUDIO.volumes;
+    [["volMusic", "music"], ["volAmb", "amb"], ["volSfx", "sfx"]].forEach(([id, kind]) => {
+      const el = $("#" + id); el.value = Math.round(V[kind] * 100);
+      el.addEventListener("input", () => { AUDIO.setVolume(kind, el.value / 100); if (kind === "sfx") sound("tick"); });
+    });
+    $("#soundOn").addEventListener("click", () => { setAudio(!app.audio); if (app.audio) AUDIO.startMusic(); });
+    panel.querySelectorAll("[data-night]").forEach((b) => b.addEventListener("click", () => setNight(b.dataset.night === "1")));
+    const now = () => ($("#soundNow").textContent = AUDIO.title);
+    AUDIO.onChange(now); now();
+    $("#btnAudio").addEventListener("click", () => { panel.classList.toggle("is-on"); sound("click"); });
+    $("#soundClose").addEventListener("click", () => panel.classList.remove("is-on"));
+  }
+
+  /* upload textures and compile shaders while the paper still covers the screen */
+  function prewarm(s) {
+    try {
+      app.renderer.compile(s.scene, s.camera);
+      s.scene.traverse((o) => [].concat(o.material || []).forEach((m) => { if (m && m.map) app.renderer.initTexture(m.map); }));
+    } catch (_) {}
   }
 
   /* ---------- scene switching ---------- */
@@ -261,6 +330,7 @@ window.CORE = (() => {
     if (app.current?.name === name && !opts.force && !(name === "home" && opts.inside && !app.current.entered)) return;
     app.busy = true; closeModal(); closeMap(); closeBrief(); $("#ach").classList.remove("is-on");
     if (!opts.fromHistory) pushRoom(keyOf(name, opts));
+    AUDIO.setMood(name === "home" ? (opts.inside ? "hall" : "outside") : name);
     sound("tear");
     await TEAR.close();
     swap(name, opts);
@@ -282,11 +352,19 @@ window.CORE = (() => {
     else if (SCENES[key]) go(key, { fromHistory: true });
   }
   function swap(name, opts) {
-    if (app.current) app.current.dispose();
+    // the house + corridor is the heaviest scene: build it once and keep it
+    if (app.current && app.current === app.home) app.current.suspend?.();
+    else if (app.current) app.current.dispose();
     app.scroll.v = 0; app.scroll.target = 0;
-    const S = SCENES[name] || SCENES.home;
-    app.current = new S(opts); app.current.name = name;
+    if (name === "home" && app.home) { app.current = app.home; app.current.resume(opts); }
+    else {
+      const S = SCENES[name] || SCENES.home;
+      app.current = new S(opts); app.current.name = name;
+      if (name === "home") app.home = app.current;
+    }
     app.current.resize(app.w, app.h);
+    app.current.applyNight(app.night, true);
+    prewarm(app.current);
     $("#btnBack").classList.toggle("is-hidden", name === "home");
     document.body.classList.toggle("is-drag", !!app.current.dragScroll);
     $("#intro").classList.toggle("is-on", name === "home" && !opts.inside);
@@ -349,7 +427,7 @@ window.CORE = (() => {
       if (k === "a" || k === "d") app.current?.onArrow?.(k === "a" ? -1 : 1);
       if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.target.closest?.("[role=tablist]")) { const d = e.key === "ArrowLeft" ? -1 : 1; if (app.current?.onArrow) app.current.onArrow(d); else app.scroll.target += d * 160; }
       if (e.key === "Enter" && app.current?.hovered?.userData.onClick) app.current.hovered.userData.onClick();
-      if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); }
+      if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); $("#soundPanel").classList.remove("is-on"); }
     });
     addEventListener("resize", () => {
       app.w = innerWidth; app.h = innerHeight;
@@ -367,7 +445,7 @@ window.CORE = (() => {
     // music starts the first time someone interacts (browsers block autoplay)
     const kick = () => { if (app.audio) AUDIO.startMusic(); removeEventListener("pointerdown", kick); removeEventListener("keydown", kick); };
     addEventListener("pointerdown", kick); addEventListener("keydown", kick);
-    $("#btnAudio").addEventListener("click", () => { setAudio(!app.audio); sound("click"); });
+    bindSoundPanel();
     $("#btnAch").addEventListener("click", () => { $("#ach").classList.toggle("is-on"); $("#btnAch").classList.remove("has-new"); sound("click"); });
     $("#achClose").addEventListener("click", () => $("#ach").classList.remove("is-on"));
     $("#modalClose").addEventListener("click", closeModal);
@@ -394,7 +472,7 @@ window.CORE = (() => {
     const s = app.current; if (!s) return;
     if (!s.wrapScroll) app.scroll.target = clamp(app.scroll.target, 0, s.scrollMax);
     // heavy, cinematic easing: the camera glides to where the wheel pointed it
-    app.scroll.v = lerp(app.scroll.v, app.scroll.target, 1 - Math.pow(0.022, dt));
+    app.scroll.v = lerp(app.scroll.v, app.scroll.target, 1 - Math.pow(0.04, dt));
     s.time += dt;
     s.update(dt);
     if (!app.pointer.down) raycast();
@@ -407,6 +485,8 @@ window.CORE = (() => {
     app.renderer.setSize(app.w, app.h);
     app.renderer.outputColorSpace = THREE.SRGBColorSpace;
     bindInput(); buildIntro(); buildMap(); renderAch(); setAudio(app.audio);
+    document.body.classList.toggle("is-night", app.night);
+    document.querySelectorAll("#soundPanel [data-night]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.night === (app.night ? "1" : "0"))));
     GH.refresh();
     const want = location.hash.slice(1);
     await TEAR.load(async () => {
@@ -426,5 +506,5 @@ window.CORE = (() => {
     else if (SCENES[want] && want !== "home") go(want);
   }
 
-  return { app, BaseScene, go, hint, unlock, sound, modal, boot, pushRoom };
+  return { app, BaseScene, go, hint, unlock, sound, modal, boot, pushRoom, setNight };
 })();

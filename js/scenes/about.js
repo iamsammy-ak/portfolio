@@ -4,7 +4,7 @@ SCENES.about = class extends CORE.BaseScene {
   constructor(opts) {
     super(opts);
     const { plane } = SK, T = ART, D = this.app.D, A = D.about;
-    this.scene.background = SK.gradientTex(SK.PAL.skyDeep, "#f1f3f2", SK.PAL.sky);
+    this.scene.background = SK.gradientTex(SK.PAL.skyDeep, "#f1f3f2", SK.PAL.sky); this.outdoor = true;
     this.scene.fog = new THREE.Fog(0xdfeaf2, 8, 30);
     this.camera.fov = 55; this.camera.position.set(0, 0, 4);
     this.scene.add(this.camera);

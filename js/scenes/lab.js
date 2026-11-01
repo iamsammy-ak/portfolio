@@ -5,7 +5,7 @@ SCENES.lab = class extends CORE.BaseScene {
   constructor(opts) {
     super(opts);
     const { plane, tex } = SK, T = ART;
-    this.dragScroll = true;
+    this.dragScroll = true; this.nightTint = "#a8977f"; this.nightBg = SK.gradientTex("#3e3022", "#2a2118", "#33281d");
     this.scene.background = SK.gradientTex("#e4cfa6", "#efe0c2", "#e9d6b2");
     this.camera.fov = 46;
     this.STEP = 520; // scroll units per card

@@ -14,16 +14,37 @@ SCENES.home = class extends CORE.BaseScene {
     this.fade = []; this.floaters = []; this.arrows = []; this.lamps = []; this.turn = { y: 0 };
     this.yaw = { v: 0, t: 0 }; this.lastScroll = 0; this.skyBits = [];
     this.camX = { v: 0 };
+    const before = this.scene.children.length;
     this.buildOutside();
+    this.outsideGroup = new THREE.Group(); this.scene.add(this.outsideGroup);
+    this.scene.children.slice(before, -1).forEach((o) => this.outsideGroup.add(o));
     this.buildCorridor();
+    this.place(opts);
+  }
+
+  /* put the visitor where they should be: the entrance, the doorway of the room
+     they just left, or the spot in the corridor where they last were */
+  place(opts) {
+    this.opts = opts; this.walking = false;
+    this.entered = !!opts.inside; this.scrollMax = this.entered ? this.scrollLen : 0;
+    gsap.killTweensOf([this.camX, this.yaw, this.app.scroll]);
+    this.camX.v = 0; this.yaw.v = this.yaw.t = 0; this.turn.y = 0;
+    Object.values(this.doors || {}).forEach((d) => { gsap.killTweensOf(d.pivot.rotation); d.pivot.rotation.y = d.ry; d.reset?.(); });
+    (this.leaves || []).forEach(({ pivot, dir, leaf }) => { gsap.killTweensOf(pivot.rotation); pivot.rotation.y = this.entered ? dir * 1.95 : 0; leaf.material.color.set(this.entered ? "#cf9a5e" : "#ffffff"); });
+    if (this.mailFlag) this.mailFlag.rotation.x = 0;
+    let v = 0;
     if (this.entered) {
-      // come back to where you were: the doorway of the room you left, or your last spot
       const from = opts.from && this.doors[opts.from], last = this.app.corridorState;
-      let v = this.posFor(-1.5);
+      v = this.posFor(-1.5);
       if (from) { v = this.posFor(from.r.z); this.camX.v = from.side * (this.W / 2 + 1.3); this.yaw.v = this.yaw.t = from.side * Math.PI / 2; }
       else if (last) { v = last.v; this.yaw.v = this.yaw.t = last.yaw; }
-      this.app.scroll.v = this.app.scroll.target = v;
     }
+    this.app.scroll.v = this.app.scroll.target = v; this.lastScroll = v;
+  }
+  resume(opts) { this.place(opts); }
+  suspend() {
+    if (this.entered) this.app.corridorState = { v: this.app.scroll.v, yaw: this.yaw.v };
+    this.setHover(null);
   }
 
   /* ---------- outside: the brick house with its tree, cat, flower box and sign — built in 3D ---------- */
@@ -62,11 +83,11 @@ SCENES.home = class extends CORE.BaseScene {
     box(HW + 0.9, 0.32, 0.7, white, [0, TOP + 0.05, 0.25]);        // cornice
     box(HW + 1.1, 0.12, 0.9, white, [0, TOP + 0.26, 0.3]);
     // pitched roof: tiles on the front slope, gables at the sides, a chimney
-    const rise = 4.0, run = 3.2, slope = Math.atan2(rise, run), len = Math.hypot(rise, run);
+    const rise = 2.4, run = 3.0, slope = Math.atan2(rise, run), len = Math.hypot(rise, run);
     const roofM = new THREE.Mesh(new THREE.PlaneGeometry(HW + 1.2, len), basic({ map: tex(T.roofTiles(), { repeat: [HW / 3, len / 1.6] }), side: THREE.DoubleSide }));
     roofM.position.set(0, TOP + 0.32 + rise / 2, 0.55 - run / 2); roofM.rotation.x = -(Math.PI / 2 - slope); this.add(roofM);
     [-1, 1].forEach((s) => { const tri = new THREE.Shape(); tri.moveTo(0.55, 0); tri.lineTo(0.55 - run, 0); tri.lineTo(0.55 - run, rise); tri.closePath(); const mat = brickMat(0.6, 0.4); mat.side = THREE.DoubleSide; const m = new THREE.Mesh(new THREE.ShapeGeometry(tri), mat); m.position.set(s * (HW / 2 + 0.3), TOP + 0.32, 0); m.rotation.y = -Math.PI / 2; this.add(m); });
-    box(0.9, 2.4, 0.9, brickMat(1, 2), [5.2, TOP + 3.6, -1.5]); box(1.1, 0.2, 1.1, stoneMat, [5.2, TOP + 4.85, -1.5]);
+    box(0.9, 2.2, 0.9, brickMat(1, 2), [5.2, TOP + 2.5, -1.5]); box(1.1, 0.2, 1.1, stoneMat, [5.2, TOP + 3.65, -1.5]);
     // the door: stone pilasters, lintel with keystone, a step
     [-1.42, 1.42].forEach((x) => box(0.32, 3.9, 0.18, stoneMat, [x, 1.95, 0.09]));
     box(3.2, 0.42, 0.2, stoneMat, [0, 3.95, 0.1]); box(0.42, 0.55, 0.26, stoneMat, [0, 3.98, 0.13]);
@@ -117,8 +138,8 @@ SCENES.home = class extends CORE.BaseScene {
     this.cat = deco(T.cat(), 0.8, -2.0, 0.6, undefined, 0.55);
 
     // sun, moon, clouds and a flapping flock
-    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(4.5, 15, -8); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
-    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(-4.5, 15.3, -8); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
+    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(12.5, 9.6, -6); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
+    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(12.5, 9.6, -6.05); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
     const ck = [T.cloud(), T.cloud(), T.cloud()];
     for (let i = 0; i < 9; i++) { const c = plane(ck[i % 3], 3 + Math.random() * 3, undefined, { fog: false }); c.position.set(-26 + i * 6.5 + Math.random() * 3, 12 + Math.random() * 6, -10 - (i % 3) * 3); c.userData.sp = 0.12 + Math.random() * 0.15; this.add(c); this.skyBits.push(c); N.fadeOut.push(c); }
     this.flock = [];
@@ -129,7 +150,7 @@ SCENES.home = class extends CORE.BaseScene {
       b.userData = { off: [i ? sideOff * row * 0.8 : 0, -row * 0.35], ph: Math.random() * 6, up, down };
       this.add(b); this.flock.push(b); N.fadeOut.push(b);
     }
-    this.flockPos = { x: -30, y: 13, z: -9 };
+    this.flockPos = { x: -30, y: 11.4, z: -7 };
 
     // the street lamp is a light switch for the sky; the mailbox goes to Contact
     this.buildLamp([7.6, 0, 1.9]);
@@ -149,8 +170,6 @@ SCENES.home = class extends CORE.BaseScene {
     });
 
     this.night = 0;
-    let saved = false; try { saved = localStorage.getItem("ak_night") === "1"; } catch (_) {}
-    if (saved) this.setNight(true, true);
   }
 
   /* a classic cast-iron street lamp with a glass lantern. Click it to switch day and night. */
@@ -170,7 +189,9 @@ SCENES.home = class extends CORE.BaseScene {
     part(new THREE.SphereGeometry(0.06, 10, 8), [0, 4.72, 0]);
     this.lampGlow = SK.plane(T.glow(), 3.4, 3.4, { fog: false }); this.lampGlow.position.set(0, 4.08, 0.25); this.lampGlow.material.blending = THREE.AdditiveBlending; this.lampGlow.material.depthWrite = false; this.lampGlow.material.opacity = 0; grp.add(this.lampGlow);
     this.lampPool = SK.plane(T.glow("255,214,140", 128), 5, 5); this.lampPool.rotation.x = -Math.PI / 2; this.lampPool.position.set(0, 0.03, 0); this.lampPool.material.blending = THREE.AdditiveBlending; this.lampPool.material.depthWrite = false; this.lampPool.material.opacity = 0; grp.add(this.lampPool);
-    grp.userData.onClick = () => { CORE.sound("click"); this.setNight(this.night < 0.5); };
+    const tag = SK.plane(T.lampTag(), 0.9, 0.62); tag.position.set(0.12, 2.35, 0.12); tag.rotation.z = -0.06; grp.add(tag); this.lampTagM = tag;
+    this.lampPulse = new THREE.Sprite(new THREE.SpriteMaterial({ map: SK.tex(T.glow("255,230,150")), blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.6 })); this.lampPulse.position.set(0, 4.08, 0.1); grp.add(this.lampPulse);
+    grp.userData.onClick = () => CORE.setNight(!this.app.night);
     grp.userData.onHover = (on) => { gsap.to(this.lampBulb.scale, { x: on ? 1.12 : 1, y: on ? 1.12 : 1, z: on ? 1.12 : 1, duration: 0.3 }); if (on && !this.lampHinted) { this.lampHinted = true; CORE.hint("THE STREET LAMP", "Click the lamp to switch between day and night"); } };
     this.add(grp); this.interactives.push(grp);
   }
@@ -185,7 +206,7 @@ SCENES.home = class extends CORE.BaseScene {
     const top = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.6, 20, 1, false, 0, Math.PI), blue); top.rotation.set(Math.PI / 2, 0, Math.PI / 2); top.position.y = 1.35; grp.add(top);
     const front = new THREE.Mesh(new THREE.CircleGeometry(0.21, 20, 0, Math.PI), dark); front.position.set(0, 1.35, 0.301); grp.add(front);
     const frontLow = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.3), dark); frontLow.position.set(0, 1.2, 0.301); grp.add(frontLow);
-    const flagPivot = new THREE.Group(); flagPivot.position.set(0.23, 1.25, -0.1); grp.add(flagPivot);
+    const flagPivot = (this.mailFlag = new THREE.Group()); flagPivot.position.set(0.23, 1.25, -0.1); grp.add(flagPivot);
     const flag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.3, 0.08), new THREE.MeshBasicMaterial({ color: SK.PAL.coral })); flag.position.y = 0.15; flagPivot.add(flag);
     grp.userData.onClick = () => { CORE.sound("open"); gsap.to(flagPivot.rotation, { x: -1.4, duration: 0.4 }); setTimeout(() => CORE.go("contact"), 350); };
     grp.userData.onHover = (on) => { gsap.to(grp.scale, { x: on ? 1.08 : 1, y: on ? 1.08 : 1, z: on ? 1.08 : 1, duration: 0.3 }); gsap.to(flagPivot.rotation, { x: on ? -0.7 : 0, duration: 0.3 }); if (on) CORE.hint("THE MAILBOX", "Click the mailbox to get in touch"); };
@@ -193,15 +214,27 @@ SCENES.home = class extends CORE.BaseScene {
   }
 
   /* cross-fade the whole outside between day and night */
+  /* the corridor and rooms get the generic night tint; the outside has its own richer version */
+  applyNight(on, instant) {
+    this.setNight(on, instant);
+    if (!this.nightSkip) {
+      const s = new Set(this.nightKit.shade);
+      this.outsideGroup.traverse((o) => [].concat(o.material || []).forEach((m) => s.add(m)));
+      this.nightSkip = s;
+    }
+    this.nightTint = "#b5a793";
+    super.applyNight(on, instant);
+  }
+
   setNight(on, instant) {
     const N = this.nightKit, d = instant ? 0 : 1.6, k = { v: this.night };
-    try { localStorage.setItem("ak_night", on ? "1" : "0"); } catch (_) {}
     const dayTint = new THREE.Color("#ffffff"), nightTint = new THREE.Color("#6a76a6"), fogDay = new THREE.Color("#e4edf2"), fogNight = new THREE.Color("#1c2547");
     gsap.to(k, {
       v: on ? 1 : 0, duration: d, ease: "power2.inOut",
       onUpdate: () => {
         this.night = k.v;
-        N.shade.forEach((m) => m.color.copy(dayTint).lerp(nightTint, k.v));
+        const mul = dayTint.clone().lerp(nightTint, k.v);
+        N.shade.forEach((m) => { m.userData.dayColor = m.userData.dayColor || m.color.clone(); m.color.copy(m.userData.dayColor).multiply(mul); });
         N.fadeIn.forEach((m) => (m.material.opacity = (m.userData.dayOpacity || 0) + (1 - (m.userData.dayOpacity || 0)) * k.v));
         N.fadeOut.forEach((m) => (m.material.opacity = 1 - k.v));
         this.skyNight.material.opacity = k.v;
@@ -299,6 +332,7 @@ SCENES.home = class extends CORE.BaseScene {
       const arrows = [[arrowL, r.z - 1.05, left ? 1 : -1], [arrowR, r.z + 1.05, left ? -1 : 1]].map(([k, z, flip]) => {
         const a = plane(k, 0.5); a.position.set(x - side * 0.03, 1.3, z); a.rotation.y = ry; a.scale.x = flip; a.visible = false; a.userData.base = [x, 1.3, z]; this.add(a); this.arrows.push(a); return a;
       });
+      this.doors[r.id].reset = () => { opening = false; arrows.forEach((a) => (a.visible = false)); };
     });
 
     D.corridor.frames.forEach((f) => {
@@ -412,6 +446,7 @@ SCENES.home = class extends CORE.BaseScene {
     this.walking = true;
     this.app.corridor = { room: r.id }; // so coming back puts you in this doorway
     CORE.sound("door");
+    setTimeout(() => CORE.sound("step"), 700); setTimeout(() => CORE.sound("step"), 1050);
     gsap.to(d.pivot.rotation, { y: d.ry + 1.7, duration: 1.2, ease: "power2.inOut" });
     gsap.to(this.app.scroll, { target: this.posFor(r.z), v: this.posFor(r.z), duration: 0.9, ease: "power2.inOut" });
     gsap.to(this.yaw, { t: -side * Math.PI / 2, v: -side * Math.PI / 2, duration: 0.9, ease: "power2.inOut" });
@@ -501,6 +536,7 @@ SCENES.home = class extends CORE.BaseScene {
   }
 
   onEnter() {
+    if (!this.entered && !this.app.lampTip) { this.app.lampTip = true; setTimeout(() => { if (!this.entered) CORE.hint("TIP", "Click the <b>street lamp</b> to switch day and night · the <b>mailbox</b> takes you to Contact", 7000); }, 2500); }
     if (this.entered) CORE.hint("THE CORRIDOR", this.D.corridor.hintEnter + " · <b>drag</b> or <b>A D</b> to look around");
   }
 
@@ -519,6 +555,9 @@ SCENES.home = class extends CORE.BaseScene {
     this.lastScroll = this.app.scroll.v;
     cam.position.z = z;
     cam.position.x = this.camX.v;
+    this.outsideGroup.visible = !this.entered || z > -6 || Math.cos(this.yaw.v) < 0.35;
+    if (this.lampPulse && z > 0) { const k = 1 - this.night; this.lampPulse.material.opacity = (0.25 + Math.sin(t * 2.4) * 0.2) * k; this.lampPulse.scale.setScalar(1.1 + Math.sin(t * 2.4) * 0.25); this.lampTagM.rotation.z = -0.06 + Math.sin(t * 1.3) * 0.04; }
+    if (this.sign) this.sign.rotation.x = Math.sin(t * 0.9) * 0.035;
     const out = smooth(0.5, 9.5, z); // outside the building: stand taller and look up at the façade
     // a soft step bob that only shows while walking
     this.bob = lerp(this.bob || 0, Math.min(speed / 900, 1), 1 - Math.pow(0.01, dt));

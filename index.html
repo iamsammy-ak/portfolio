@@ -27,7 +27,7 @@
       <button class="hud__btn" id="btnBrief" aria-label="Open the one-page summary" title="at a glance"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2" /><path d="M9 7V5h6v2M4 12h16" /></svg></button>
       <button class="hud__btn" id="btnCV" aria-label="Open my CV" title="my CV"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 12h7M9 15.5h7M9 9h3" /></svg></button>
       <button class="hud__btn" id="btnMap" aria-label="Map" title="map"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
-      <button class="hud__btn" id="btnAudio" aria-label="Toggle audio" title="sound"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z" /><path class="snd" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" /><path class="mute" d="M17 9l4 6M21 9l-4 6" /></svg></button>
+      <button class="hud__btn" id="btnAudio" aria-label="Sound and light settings" aria-controls="soundPanel" title="sound & light"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z" /><path class="snd" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" /><path class="mute" d="M17 9l4 6M21 9l-4 6" /></svg></button>
       <button class="hud__btn" id="btnAch" aria-label="Achievements" title="achievements"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 01-8 0V4zM8 6H5a3 3 0 003 3M16 6h3a3 3 0 01-3 3M12 13v4M8 21h8M9 17h6" /></svg></button>
     </div>
   </div>
@@ -59,6 +59,20 @@
       <svg id="mapSvg" viewBox="0 0 520 480" class="mp"></svg>
     </div>
   </div>
+
+  <!-- sound & light -->
+  <aside class="sound sheet" id="soundPanel" aria-label="Sound and light">
+    <div class="sheet__head"><span>SOUND &amp; LIGHT</span><button class="sheet__x" id="soundClose" aria-label="Close">×</button></div>
+    <div class="sound__body">
+      <p class="sound__now">Now playing <b id="soundNow"></b></p>
+      <div class="sound__row"><span>Sound</span><button class="switch" id="soundOn" role="switch" aria-checked="true" aria-label="Sound on"><i></i></button></div>
+      <label class="sound__row"><span>Music</span><input type="range" min="0" max="100" id="volMusic" /></label>
+      <label class="sound__row"><span>Ambience</span><input type="range" min="0" max="100" id="volAmb" /></label>
+      <label class="sound__row"><span>Effects</span><input type="range" min="0" max="100" id="volSfx" /></label>
+      <div class="sound__row"><span>Light</span><div class="seg"><button type="button" data-night="0" aria-pressed="true">☀ Day</button><button type="button" data-night="1" aria-pressed="false">☾ Night</button></div></div>
+      <p class="sound__tip">Each room has its own music. The street lamp outside also switches day and night.</p>
+    </div>
+  </aside>
 
   <!-- achievements -->
   <aside class="ach sheet" id="ach">

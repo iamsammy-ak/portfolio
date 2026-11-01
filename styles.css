@@ -224,6 +224,23 @@ button { font: inherit; color: inherit; }
 .tear__ring--2 { inset: 12px; border-color: var(--coral); animation-direction: reverse; animation-duration: 6s; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------- sound & light panel ---------- */
+.sound { position: fixed; top: 82px; right: 24px; width: min(330px, calc(100vw - 32px)); z-index: 45; padding-bottom: 18px; opacity: 0; pointer-events: none; transform: translateY(-8px) rotate(0.6deg); transition: opacity 0.25s, transform 0.35s var(--ease-out); }
+.sound.is-on { opacity: 1; pointer-events: auto; transform: none; }
+.sound__body { padding: 12px 24px 0; display: grid; gap: 12px; }
+.sound__now { margin: 0; font-family: var(--font-hand); font-size: 19px; color: var(--ink-2); }
+.sound__now b { color: var(--ink); }
+.sound__row { display: grid; grid-template-columns: 82px 1fr; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; }
+.sound__row input[type=range] { width: 100%; accent-color: #7b2232; }
+.sound__tip { margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+.switch { justify-self: start; width: 46px; height: 26px; border-radius: 13px; border: 1.5px solid var(--ink); background: #e6e1d6; position: relative; cursor: pointer; padding: 0; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 19px; height: 19px; border-radius: 50%; background: var(--ink); transition: transform 0.25s var(--ease-out); }
+.switch[aria-checked="true"] { background: var(--sun); }
+.switch[aria-checked="true"] i { transform: translateX(19px); }
+.seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; justify-self: start; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper-2); }
+
 /* ---------- one-page summary ("at a glance") ---------- */
 #btnBrief:hover { background: #d4ecd2; }
 .intro__brief { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--coral); text-underline-offset: 4px; }

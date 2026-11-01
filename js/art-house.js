@@ -349,5 +349,17 @@
     return k;
   }
 
-  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers });
+  /* a paper tag tied to the lamp post: it tells you the lamp is a day/night switch */
+  function lampTag() {
+    const k = canvas(420, 290), g = k.g, p = new Pen(g, { width: 2.2, jitter: 0.8 });
+    p.stroke([[40, 30], [400, 22], [410, 270], [30, 278]], true, { fill: "#fff3b4" });
+    p.circle(70, 60, 11, { fill: "#e6dcc0", passes: 1 }); p.curve([[70, 60], [40, 20], [10, 4]], false, { width: 2 });
+    p.circle(130, 140, 34, { fill: C.sun }); for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU; p.line(130 + Math.cos(a) * 44, 140 + Math.sin(a) * 44, 130 + Math.cos(a) * 56, 140 + Math.sin(a) * 56, { passes: 1 }); }
+    p.text("⇄", 210, 140, { size: 50, font: "sans", weight: 800 });
+    g.fillStyle = "#2b3150"; g.beginPath(); g.arc(300, 140, 36, 0, TAU); g.fill(); g.fillStyle = "#fff3b4"; g.beginPath(); g.arc(314, 130, 32, 0, TAU); g.fill();
+    p.text("click the lamp", 215, 232, { size: 46, font: "hand", weight: 700 });
+    return k;
+  }
+
+  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers, lampTag });
 })();

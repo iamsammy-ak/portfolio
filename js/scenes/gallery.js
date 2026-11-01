@@ -4,7 +4,7 @@ SCENES.gallery = class extends CORE.BaseScene {
   constructor(opts) {
     super(opts);
     const { plane, tex } = SK, T = ART, D = this.app.D;
-    this.wrapScroll = true; this.dragScroll = true;
+    this.wrapScroll = true; this.dragScroll = true; this.outdoor = true;
     this.scene.background = SK.gradientTex(SK.PAL.skyDeep, SK.PAL.horizon, SK.PAL.sky);
     this.scene.fog = new THREE.Fog(0xe4ecf1, 14, 30);
     this.camera.fov = 50; this.camera.position.set(0, 1.7, 7);

@@ -7,7 +7,7 @@ SCENES.contact = class extends CORE.BaseScene {
     this.scene.background = SK.gradientTex(SK.PAL.skyDeep, SK.PAL.horizon, SK.PAL.sky);
     this.scene.fog = new THREE.Fog(0xe0ebf2, 18, 60);
     this.camera.fov = 52; this.camera.position.set(0, 2.4, 7); this.pitch = -0.17;
-    this.wrapScroll = true;
+    this.wrapScroll = true; this.outdoor = true;
 
     this.waterTex = tex(T.water(), { repeat: [14, 14] });
     const water = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshBasicMaterial({ map: this.waterTex }));

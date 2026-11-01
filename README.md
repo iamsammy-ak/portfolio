@@ -85,9 +85,23 @@ Each door is painted in a colour from Turin and opens into a lit room you can se
 
 Images are public domain, via Wikimedia Commons, stored in `assets/art/`. Change or add them under `corridor.paintings` in `data.js`.
 
-## 🎵 Sound
+## 🎵 Sound and light
 
-All music and effects are generated in the browser with Web Audio in `js/audio.js`. There is a slow lo-fi loop, plus footsteps, door creaks, paper tears, card flips and a chime for achievements. Nothing is downloaded. To play your own licensed track instead, put the mp3 in `assets/audio/` and set `audio.music` in `data.js`.
+Each room has its own generative piece, made in the browser in `js/audio.js`:
+
+| Room | Music | Ambience |
+| --- | --- | --- |
+| Outside | Garden morning | birds by day, crickets at night |
+| Corridor | Corridor lo-fi | |
+| Gallery | Rooftop waltz | wind |
+| Office | Office focus | |
+| Lab | Lab sequencer | |
+| About | Story in the clouds | wind |
+| Contact | Seaside | waves |
+
+Effects are generated too: heel-and-toe footsteps, a key turning and the latch releasing before each door creaks open, paper tears, card flips and a chime for achievements. Nothing is downloaded.
+
+The speaker button opens **Sound & light**. It has a sound switch, separate volumes for music, ambience and effects, and a day/night switch. Night applies to every room, and so does the street lamp outside. To play your own licensed track instead, put the mp3 in `assets/audio/` and set `audio.music` in `data.js`.
 
 ## 💼 For recruiters
 
