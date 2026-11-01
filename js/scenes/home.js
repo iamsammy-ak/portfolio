@@ -26,13 +26,14 @@ SCENES.home = class extends CORE.BaseScene {
     }
   }
 
-  /* ---------- outside: a modern house in a garden, Turin on the hills behind ---------- */
+  /* ---------- outside: the brick house with its tree, cat, flower box and sign — built in 3D ---------- */
   buildOutside() {
     const { plane, tex } = SK, T = ART, D = this.D;
     const N = (this.nightKit = { shade: [], fadeIn: [], fadeOut: [], swap: [] });
     const basic = (o) => { const m = new THREE.MeshBasicMaterial(o); N.shade.push(m); return m; };
-    const box = (w, h, d, mats, pos) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats.length === 1 ? mats[0] : mats); m.position.set(...pos); this.add(m); return m; };
+    const box = (w, h, d, mat, pos, rot) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(...pos); if (rot) m.rotation.set(...rot); this.add(m); return m; };
     const flat = (k, w, h, pos, rot = [0, 0, 0], o = {}) => { const m = plane(k, w, h, o); m.position.set(...pos); m.rotation.set(...rot); this.add(m); N.shade.push(m.material); return m; };
+    const stoneK = T.stone(), stoneMat = basic({ map: tex(stoneK) }), white = basic({ color: "#f3efe6" }), iron = basic({ color: "#24282b" });
 
     // sky dome: day and night versions cross-fade
     const dome = (top, mid, bottom) => new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.MeshBasicMaterial({ map: SK.gradientTex(top, bottom, mid), side: THREE.BackSide, fog: false, depthWrite: false, transparent: true }));
@@ -40,78 +41,86 @@ SCENES.home = class extends CORE.BaseScene {
     this.skyNight = dome("#0b1430", "#1f2d58", "#3a3f6a"); this.skyNight.position.y = 2; this.skyNight.scale.setScalar(0.99); this.skyNight.material.opacity = 0; this.add(this.skyNight);
     this.scene.background = new THREE.Color("#bcd8ee");
     const st = plane(T.stars(), 220, 90, { fog: false }); st.position.set(0, 40, -88); st.material.opacity = 0; this.add(st); N.fadeIn.push(st);
+    flat(T.turinSkyline(), 230, 50, [0, 12, -78], [0, 0, 0], { fog: false });
 
-    // Turin on the hills, far behind the house
-    const city = flat(T.turinSkyline(), 230, 50, [0, 12, -78], [0, 0, 0], { fog: false });
-
-    // ground: lawn, a paver path, gravel strip along the house
+    // ground: lawn, a stone pavement along the house, the path to the door
     const lawn = new THREE.Mesh(new THREE.PlaneGeometry(140, 80), basic({ map: tex(T.lawn(512), { repeat: [40, 22] }) }));
     lawn.rotation.x = -Math.PI / 2; lawn.position.set(0, -0.01, -10); this.add(lawn);
-    flat(T.pavers(), 2.6, 9.4, [0, 0.01, 4.7], [-Math.PI / 2, 0, 0]);
+    const pave = new THREE.Mesh(new THREE.PlaneGeometry(22, 1.6), basic({ map: tex(T.ground(512), { repeat: [11, 1] }) })); pave.rotation.x = -Math.PI / 2; pave.position.set(0, 0.005, 0.8); this.add(pave);
+    flat(T.stonePath(), 3.0, 8, [0, 0.012, 5.4], [-Math.PI / 2, 0, 0]);
 
-    // the house: charcoal ground floor, cedar first floor cantilevered over it, flat roof
-    const HW = 17, cladK = T.cladding(), cl = (w, h, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), basic({ map: tex(cladK, { repeat: [w / 4, h / 3.7] }) })); m.position.set(x, y, z); m.rotation.y = ry; this.add(m); return m; };
-    cl(HW / 2 - 1.25, 3.7, -(HW / 2 + 1.25) / 2, 1.85, 0); cl(HW / 2 - 1.25, 3.7, (HW / 2 + 1.25) / 2, 1.85, 0);
-    cl(14, 3.7, -HW / 2, 1.85, -7, -Math.PI / 2); cl(14, 3.7, HW / 2, 1.85, -7, Math.PI / 2);
-    // left: a mural sprayed on the cladding; right: the studio behind a glass wall
-    flat(T.graffiti("HELLO", { w: 1400, h: 560, colors: ["#ffd166", "#ef476f", "#7b2232"], tag: "AK '26", arrow: false }), 5.4, 2.4, [-4.75, 1.9, 0.02]);
-    this.addGlass("studio", 5.2, 2.85, [4.6, 1.8, 0.02]);
-    // side walls get graffiti too
-    flat(T.graffiti("TORINO", { w: 1600, h: 520, colors: ["#bfe3d6", "#3e7c82", "#2f5f8a"], tag: "AK" }), 9, 2.9, [-HW / 2 - 0.02, 1.9, -6], [0, -Math.PI / 2, 0]);
-    const wood = tex(T.woodSlats(), { repeat: [HW / 3.5, 1] });
-    const woodSide = tex(T.woodSlats(), { repeat: [0.6, 1] });
-    const upper = box(HW, 3.0, 1.4, [basic({ map: woodSide }), basic({ map: woodSide }), basic({ color: "#d9dcdf" }), basic({ color: "#e2c79b" }), basic({ map: wood }), basic({ color: "#3d434a" })], [0, 5.2, 0.45]);
-    this.addRibbon(12, 1.15, [0, 5.45, 1.16]);
-    box(HW + 0.4, 0.28, 1.9, [basic({ color: "#e6e8ea" })], [0, 6.84, 0.4]);
-    // solar panels tilted on the roof
-    const solar = T.solarPanel();
-    for (let i = 0; i < 6; i++) flat(solar, 2.2, 1.35, [-6.2 + i * 2.48, 7.35, -0.2], [-0.95, 0, 0]);
-    // recessed lights in the soffit of the overhang
-    const glowK = T.glow();
-    for (let x = -7; x <= 7; x += 2) { const g = plane(glowK, 0.9, 0.9, { fog: false }); g.position.set(x, 3.68, 0.9); g.rotation.x = Math.PI / 2; g.material.blending = THREE.AdditiveBlending; g.material.opacity = 0.25; g.material.depthWrite = false; this.add(g); N.fadeIn.push(g); g.userData.dayOpacity = 0.25; }
-    // entrance: dark frame, canopy, neon sign, video doorbell
-    box(2.9, 0.12, 0.25, [basic({ color: "#24282d" })], [0, 3.76, 0.1]);
-    [-1.38, 1.38].forEach((x) => box(0.14, 3.7, 0.25, [basic({ color: "#24282d" })], [x, 1.85, 0.1]));
-    box(3.8, 0.14, 1.7, [basic({ color: "#2b2f33" })], [0, 3.86, 0.85]);
-    const sign = plane(T.neonSign(D.entrance.sign, D.meta.name), 3.6, 0.77, { fog: false }); sign.position.set(0, 4.25, 1.17); this.add(sign);
-    flat(T.evCharger(), 0.5, 0.9, [7.6, 1.15, 0.03]);
-    // wall lights either side of the door
-    [-2.1, 2.1].forEach((x) => {
-      box(0.18, 0.45, 0.18, [basic({ color: "#24282d" })], [x, 2.6, 0.12]);
-      const g = plane(glowK, 1.4, 2.2, { fog: false }); g.position.set(x, 2.6, 0.23); g.material.blending = THREE.AdditiveBlending; g.material.depthWrite = false; g.material.opacity = 0.15; g.userData.dayOpacity = 0.15; this.add(g); N.fadeIn.push(g);
-    });
-    // jambs so the doorway has depth
-    const jamb = new THREE.MeshBasicMaterial({ color: "#2b2f33" });
+    // the house: brick walls with real thickness, stone corners, plinth, cornice and a tiled roof
+    const HW = 18, TOP = 6.7, DEPTH = 9, brick = T.bricks();
+    const brickMat = (w, h, ox = 0, oy = 0) => basic({ map: tex(brick, { repeat: [w / 8, h / 4], offset: [ox / 8, oy / 4] }) });
+    const wall = (x0, x1, y0, y1) => { const w = x1 - x0, h = y1 - y0; const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), brickMat(w, h, x0 + 20, y0)); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, 0); this.add(m); };
+    wall(-HW / 2, -1.25, 0, TOP); wall(1.25, HW / 2, 0, TOP); wall(-1.25, 1.25, 3.7, TOP);
+    [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(DEPTH, TOP), brickMat(DEPTH, TOP)); m.position.set(s * HW / 2, TOP / 2, -DEPTH / 2); m.rotation.y = s * Math.PI / 2; this.add(m); });
+    // stone quoins on the corners
+    [-1, 1].forEach((s) => { for (let y = 0.25, i = 0; y < TOP; y += 0.5, i++) box(i % 2 ? 0.55 : 0.85, 0.46, 0.12, stoneMat, [s * (HW / 2 - (i % 2 ? 0.27 : 0.42)), y, 0.06]); });
+    box(HW + 0.2, 0.45, 0.16, stoneMat, [0, 0.22, 0.08]);           // plinth
+    box(HW + 0.2, 0.18, 0.14, stoneMat, [0, 3.98, 0.07]);           // string course between the floors
+    box(HW + 0.9, 0.32, 0.7, white, [0, TOP + 0.05, 0.25]);        // cornice
+    box(HW + 1.1, 0.12, 0.9, white, [0, TOP + 0.26, 0.3]);
+    // pitched roof: tiles on the front slope, gables at the sides, a chimney
+    const rise = 4.0, run = 3.2, slope = Math.atan2(rise, run), len = Math.hypot(rise, run);
+    const roofM = new THREE.Mesh(new THREE.PlaneGeometry(HW + 1.2, len), basic({ map: tex(T.roofTiles(), { repeat: [HW / 3, len / 1.6] }), side: THREE.DoubleSide }));
+    roofM.position.set(0, TOP + 0.32 + rise / 2, 0.55 - run / 2); roofM.rotation.x = -(Math.PI / 2 - slope); this.add(roofM);
+    [-1, 1].forEach((s) => { const tri = new THREE.Shape(); tri.moveTo(0.55, 0); tri.lineTo(0.55 - run, 0); tri.lineTo(0.55 - run, rise); tri.closePath(); const mat = brickMat(0.6, 0.4); mat.side = THREE.DoubleSide; const m = new THREE.Mesh(new THREE.ShapeGeometry(tri), mat); m.position.set(s * (HW / 2 + 0.3), TOP + 0.32, 0); m.rotation.y = -Math.PI / 2; this.add(m); });
+    box(0.9, 2.4, 0.9, brickMat(1, 2), [5.2, TOP + 3.6, -1.5]); box(1.1, 0.2, 1.1, stoneMat, [5.2, TOP + 4.85, -1.5]);
+    // the door: stone pilasters, lintel with keystone, a step
+    [-1.42, 1.42].forEach((x) => box(0.32, 3.9, 0.18, stoneMat, [x, 1.95, 0.09]));
+    box(3.2, 0.42, 0.2, stoneMat, [0, 3.95, 0.1]); box(0.42, 0.55, 0.26, stoneMat, [0, 3.98, 0.13]);
+    box(3.4, 0.2, 0.9, stoneMat, [0, 0.1, 0.45]);
+    const jamb = basic({ color: "#c9b79c" });
     [[-1.25, Math.PI / 2], [1.25, -Math.PI / 2]].forEach(([x, ry]) => { const j = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 3.7), jamb); j.position.set(x, 1.85, -0.2); j.rotation.y = ry; this.add(j); });
 
-    // garden: planters, shrubs, grasses, lavender, two trees, path lights
-    const planterMat = basic({ color: "#c9c6bf" });
-    [[-4.7, 3.6], [4.6, 3.6]].forEach(([x, w]) => {
-      box(w, 0.5, 0.7, [planterMat], [x, 0.25, 0.75]);
-      for (let i = 0; i < 4; i++) flat(i % 2 ? T.lavender() : T.grasses(), 1.1, i % 2 ? 0.8 : 1.1, [x - w / 2 + 0.5 + i * (w - 1) / 3, 0.5 + (i % 2 ? 0.38 : 0.52), 0.8]);
-    });
+    // windows: recessed glass, white frames, stone sills, green shutters; the right one keeps its flower box
+    const shutK = T.shutter();
+    const windowAt = (x, y, w, h) => {
+      const g = flat(T.windowGlass(false), w, h, [x, y, 0.012]);
+      const lit = plane(T.windowGlass(true), w, h, { fog: false }); lit.position.set(x, y, 0.016); lit.material.opacity = 0; this.add(lit); N.fadeIn.push(lit);
+      const fr = 0.12;
+      box(w + fr * 2, fr, 0.16, white, [x, y + h / 2 + fr / 2, 0.08]); box(w + fr * 2, fr, 0.16, white, [x, y - h / 2 - fr / 2, 0.08]);
+      [-1, 1].forEach((s) => box(fr, h, 0.16, white, [x + s * (w / 2 + fr / 2), y, 0.08]));
+      box(0.06, h, 0.06, white, [x, y, 0.05]); box(w, 0.06, 0.06, white, [x, y, 0.05]);
+      // inner shadow so the glass reads as set back into the wall
+      const sh = plane(T.glow("20,20,30", 64), w * 1.6, h * 1.6); sh.position.set(x, y, 0.02); sh.material.opacity = 0.18; this.add(sh);
+      box(w + 0.6, 0.14, 0.4, stoneMat, [x, y - h / 2 - 0.19, 0.16]);
+      box(w + 0.5, 0.22, 0.12, stoneMat, [x, y + h / 2 + 0.24, 0.06]);
+      [-1, 1].forEach((s) => { const sm = plane(shutK, w * 0.42, h + 0.1); sm.position.set(x + s * (w / 2 + 0.12 + w * 0.21), y, 0.06); this.add(sm); N.shade.push(sm.material); });
+    };
+    windowAt(4.7, 2.15, 2.1, 2.1); windowAt(-4.7, 2.15, 2.1, 2.1);
+    windowAt(-4.7, 5.35, 1.6, 1.5); windowAt(4.7, 5.35, 1.6, 1.5);
+    const wood = basic({ color: SK.PAL.wood });
+    box(2.8, 0.42, 0.45, basic({ color: "#b98654" }), [4.7, 0.86, 0.42]);
+    flat(T.flowers(), 2.7, 0.9, [4.7, 1.3, 0.38]);
+
+    // the hanging sign on two chains from iron brackets — it sways a little in the wind
+    [-1.3, 1.3].forEach((x) => { box(0.06, 0.06, 0.75, iron, [x, 5.95, 0.4]); box(0.05, 0.4, 0.05, iron, [x, 5.8, 0.05]); });
+    box(2.9, 0.07, 0.07, iron, [0, 5.95, 0.75]);
+    this.sign = new THREE.Group(); this.sign.position.set(0, 5.95, 0.75); this.add(this.sign);
+    [-1.1, 1.1].forEach((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.55, 6), iron); c.position.set(x, -0.28, 0); this.sign.add(c); });
+    const board = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.95, 0.08), [wood, wood, wood, wood, basic({ map: tex(T.signFace(D.entrance.sign)) }), basic({ map: tex(T.signFace(D.entrance.sign)) })]);
+    board.position.y = -1.02; this.sign.add(board);
+
+    // bunting across the front, a little proud of the wall
+    const bunt = flat(T.bunting(), 12, 0.95, [0, 6.42, 0.62]);
+
+    // garden: the tree (in front of the house now), shrubs, the cat
     const tree = T.treeNatural();
-    [[-11, 4, 9.5], [11.5, 1.5, 8]].forEach(([x, z, h]) => {
+    [[-7.0, 1.9, 8.6], [11.8, 2.5, 7.5]].forEach(([x, z, h]) => {
       [0, Math.PI / 2].forEach((ry) => flat(tree, h * 0.8, h, [x, h / 2, z], [0, ry, 0]));
       const sh = plane(T.glow("30,50,20", 128), h * 0.7, h * 0.35); sh.rotation.x = -Math.PI / 2; sh.position.set(x + 0.4, 0.02, z + 0.3); sh.material.opacity = 0.35; this.add(sh);
     });
-    [[-7.5, 2.4, "#5f8f45"], [-2.4, 2.2, "#6c9c4c"], [7.6, 2.6, "#5f8f45"], [-13.5, 6, "#4e7e3c"], [14, 5, "#5f8f45"], [9.6, 4.6, "#6c9c4c"]].forEach(([x, z, c], i) => {
-      const s = flat(T.shrub(c), 1.2 + (i % 3) * 0.3, 0.9 + (i % 3) * 0.2, [x, 0.45 + (i % 3) * 0.1, z]); s.userData.billboard = true; (this.billboards = this.billboards || []).push(s);
-    });
-    [2, 4.5, 7].forEach((z) => [-1.6, 1.6].forEach((x) => {
-      const mat = basic({ color: "#2b2f33" });
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.5, 12), mat); post.position.set(x, 0.25, z); this.add(post);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 12), new THREE.MeshBasicMaterial({ color: "#fff1c9" })); cap.position.set(x, 0.47, z); this.add(cap);
-      const g = plane(glowK, 0.9, 0.9, { fog: false }); g.position.set(x, 0.45, z + 0.01); g.material.blending = THREE.AdditiveBlending; g.material.depthWrite = false; g.material.opacity = 0; g.userData.dayOpacity = 0; this.add(g); N.fadeIn.push(g);
-    }));
+    [[-8.6, 0.9, "#5f8f45"], [-3.6, 0.9, "#6c9c4c"], [7.4, 0.9, "#5f8f45"], [-12, 4, "#4e7e3c"], [9.4, 3.6, "#6c9c4c"]].forEach(([x, z, c], i) => flat(T.shrub(c), 1.3 + (i % 2) * 0.4, 1.0 + (i % 2) * 0.25, [x, 0.5 + (i % 2) * 0.12, z]));
+    const deco = (k, w, x, y, h, z) => { const m = plane(k, w, h); m.position.set(x, y, z); this.add(m); N.shade.push(m.material); return m; };
+    this.cat = deco(T.cat(), 0.8, -2.0, 0.6, undefined, 0.55);
 
-    // the cat, a flapping flock, drifting clouds, sun and moon
-    const deco = (k, w, x, y, h, z = 0.06) => { const m = plane(k, w, h); m.position.set(x, y, z); this.add(m); N.shade.push(m.material); return m; };
-    this.cat = deco(T.cat(), 0.8, -2.0, 0.42, undefined, 1.3);
-    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(4.5, 14.5, -6); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
-    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(-4.5, 14.8, -6); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
+    // sun, moon, clouds and a flapping flock
+    const sunM = plane(T.sun(), 2.2, undefined, { fog: false }); sunM.position.set(4.5, 15, -8); sunM.userData.spin = 0.05; this.add(sunM); this.skyBits.push(sunM); N.fadeOut.push(sunM);
+    const moonM = plane(T.moon(), 3, undefined, { fog: false }); moonM.position.set(-4.5, 15.3, -8); moonM.material.opacity = 0; this.add(moonM); N.fadeIn.push(moonM);
     const ck = [T.cloud(), T.cloud(), T.cloud()];
-    for (let i = 0; i < 9; i++) { const c = plane(ck[i % 3], 3 + Math.random() * 3, undefined, { fog: false }); c.position.set(-26 + i * 6.5 + Math.random() * 3, 11 + Math.random() * 6, -8 - (i % 3) * 3); c.userData.sp = 0.12 + Math.random() * 0.15; this.add(c); this.skyBits.push(c); N.fadeOut.push(c); }
+    for (let i = 0; i < 9; i++) { const c = plane(ck[i % 3], 3 + Math.random() * 3, undefined, { fog: false }); c.position.set(-26 + i * 6.5 + Math.random() * 3, 12 + Math.random() * 6, -10 - (i % 3) * 3); c.userData.sp = 0.12 + Math.random() * 0.15; this.add(c); this.skyBits.push(c); N.fadeOut.push(c); }
     this.flock = [];
     const up = tex(T.birdPose(true)), down = tex(T.birdPose(false));
     for (let i = 0; i < 7; i++) {
@@ -120,13 +129,13 @@ SCENES.home = class extends CORE.BaseScene {
       b.userData = { off: [i ? sideOff * row * 0.8 : 0, -row * 0.35], ph: Math.random() * 6, up, down };
       this.add(b); this.flock.push(b); N.fadeOut.push(b);
     }
-    this.flockPos = { x: -30, y: 12.5, z: -7 };
+    this.flockPos = { x: -30, y: 13, z: -9 };
 
     // the street lamp is a light switch for the sky; the mailbox goes to Contact
-    this.buildLamp([5.6, 0, 3.4]);
-    this.buildMailbox([-2.9, 0, 2.1]);
+    this.buildLamp([7.6, 0, 1.9]);
+    this.buildMailbox([-2.9, 0, 1.7]);
 
-    // double glass doors on pivots
+    // double doors on pivots
     const stk = D.entrance.stickers, half = Math.ceil(stk.length / 2);
     this.leaves = [];
     [[-1.25, 0.625, stk.slice(0, half), true, -1], [1.25, -0.625, stk.slice(half), false, 1]].forEach(([px, off, stick, hingeLeft, dir]) => {
@@ -144,43 +153,42 @@ SCENES.home = class extends CORE.BaseScene {
     if (saved) this.setNight(true, true);
   }
 
-  /* a glass wall whose interior lights up at night */
-  addGlass(kind, w, h, pos) {
-    const { plane } = SK, T = ART;
-    const day = plane(T.glassWall(kind, false), w, h); day.position.set(...pos); this.add(day); this.nightKit.shade.push(day.material);
-    const night = plane(T.glassWall(kind, true), w, h, { fog: false }); night.position.set(pos[0], pos[1], pos[2] + 0.005); night.material.opacity = 0; this.add(night); this.nightKit.fadeIn.push(night);
-  }
-  addRibbon(w, h, pos) {
-    const { plane } = SK, T = ART;
-    const day = plane(T.ribbonWindow(false), w, h); day.position.set(...pos); this.add(day); this.nightKit.shade.push(day.material);
-    const night = plane(T.ribbonWindow(true), w, h, { fog: false }); night.position.set(pos[0], pos[1], pos[2] + 0.005); night.material.opacity = 0; this.add(night); this.nightKit.fadeIn.push(night);
-  }
-
-  /* a real 3D street lamp: pole, arm, lantern, glow. Click it to switch day and night. */
+  /* a classic cast-iron street lamp with a glass lantern. Click it to switch day and night. */
   buildLamp([x, y, z]) {
     const T = ART, grp = new THREE.Group(); grp.position.set(x, y, z);
-    const dark = new THREE.MeshBasicMaterial({ color: "#23272b" });
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 3.6, 16), dark); pole.position.y = 1.8; grp.add(pole);
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.25, 16), dark); base.position.y = 0.12; grp.add(base);
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.7, 8), dark); arm.rotation.z = Math.PI / 2; arm.position.set(-0.32, 3.55, 0); grp.add(arm);
-    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 0.22, 20), dark); head.position.set(-0.65, 3.45, 0); grp.add(head);
-    this.lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: "#f3efe2" })); this.lampBulb.position.set(-0.65, 3.32, 0); grp.add(this.lampBulb);
-    this.lampGlow = SK.plane(T.glow(), 3.2, 3.2, { fog: false }); this.lampGlow.position.set(-0.65, 3.2, 0.05); this.lampGlow.material.blending = THREE.AdditiveBlending; this.lampGlow.material.depthWrite = false; this.lampGlow.material.opacity = 0; grp.add(this.lampGlow);
-    this.lampPool = SK.plane(T.glow("255,214,140", 128), 4, 4); this.lampPool.rotation.x = -Math.PI / 2; this.lampPool.position.set(-0.65, 0.03, 0); this.lampPool.material.blending = THREE.AdditiveBlending; this.lampPool.material.depthWrite = false; this.lampPool.material.opacity = 0; grp.add(this.lampPool);
+    const green = new THREE.MeshBasicMaterial({ color: "#1f3a33" }); this.nightKit.shade.push(green);
+    const part = (geo, pos) => { const m = new THREE.Mesh(geo, green); m.position.set(...pos); grp.add(m); return m; };
+    part(new THREE.CylinderGeometry(0.22, 0.3, 0.5, 16), [0, 0.25, 0]);
+    part(new THREE.CylinderGeometry(0.14, 0.2, 0.4, 16), [0, 0.7, 0]);
+    part(new THREE.CylinderGeometry(0.06, 0.09, 2.8, 16), [0, 2.25, 0]);
+    part(new THREE.CylinderGeometry(0.12, 0.08, 0.18, 16), [0, 3.7, 0]);
+    part(new THREE.TorusGeometry(0.16, 0.025, 8, 24), [0, 3.4, 0]).rotation.x = Math.PI / 2;
+    // lantern: four glass panes, a pyramid cap, a finial
+    this.lampBulb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.55, 0.42), new THREE.MeshBasicMaterial({ color: "#e9eef0", transparent: true, opacity: 0.85 })); this.lampBulb.position.set(0, 4.08, 0); grp.add(this.lampBulb);
+    [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([a, b]) => part(new THREE.BoxGeometry(0.035, 0.6, 0.035), [a * 0.22, 4.08, b * 0.22]));
+    part(new THREE.ConeGeometry(0.4, 0.32, 4), [0, 4.52, 0]).rotation.y = Math.PI / 4;
+    part(new THREE.SphereGeometry(0.06, 10, 8), [0, 4.72, 0]);
+    this.lampGlow = SK.plane(T.glow(), 3.4, 3.4, { fog: false }); this.lampGlow.position.set(0, 4.08, 0.25); this.lampGlow.material.blending = THREE.AdditiveBlending; this.lampGlow.material.depthWrite = false; this.lampGlow.material.opacity = 0; grp.add(this.lampGlow);
+    this.lampPool = SK.plane(T.glow("255,214,140", 128), 5, 5); this.lampPool.rotation.x = -Math.PI / 2; this.lampPool.position.set(0, 0.03, 0); this.lampPool.material.blending = THREE.AdditiveBlending; this.lampPool.material.depthWrite = false; this.lampPool.material.opacity = 0; grp.add(this.lampPool);
     grp.userData.onClick = () => { CORE.sound("click"); this.setNight(this.night < 0.5); };
-    grp.userData.onHover = (on) => { gsap.to(this.lampBulb.scale, { x: on ? 1.3 : 1, y: on ? 1.3 : 1, z: on ? 1.3 : 1, duration: 0.3 }); if (on && !this.lampHinted) { this.lampHinted = true; CORE.hint("THE STREET LAMP", "Click the lamp to switch between day and night"); } };
+    grp.userData.onHover = (on) => { gsap.to(this.lampBulb.scale, { x: on ? 1.12 : 1, y: on ? 1.12 : 1, z: on ? 1.12 : 1, duration: 0.3 }); if (on && !this.lampHinted) { this.lampHinted = true; CORE.hint("THE STREET LAMP", "Click the lamp to switch between day and night"); } };
     this.add(grp); this.interactives.push(grp);
   }
 
+  /* the blue round-topped mailbox with its coral flag. Click it to go to Contact. */
   buildMailbox([x, y, z]) {
-    const T = ART, grp = new THREE.Group(); grp.position.set(x, y, z);
-    const dark = new THREE.MeshBasicMaterial({ color: "#2f3439" });
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.1), dark); post.position.y = 0.5; grp.add(post);
-    const front = new THREE.MeshBasicMaterial({ map: SK.tex(T.mailboxFront()) });
-    const boxM = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.58, 0.36), [dark, dark, new THREE.MeshBasicMaterial({ color: "#3d434a" }), dark, front, dark]); boxM.position.y = 1.25; grp.add(boxM);
-    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.06), new THREE.MeshBasicMaterial({ color: SK.PAL.burnt })); flag.position.set(0.25, 1.38, 0.05); grp.add(flag);
-    grp.userData.onClick = () => { CORE.sound("open"); gsap.to(flag.rotation, { z: -1.4, duration: 0.4 }); setTimeout(() => CORE.go("contact"), 350); };
-    grp.userData.onHover = (on) => { gsap.to(grp.scale, { x: on ? 1.08 : 1, y: on ? 1.08 : 1, z: on ? 1.08 : 1, duration: 0.3 }); gsap.to(flag.rotation, { z: on ? -0.6 : 0, duration: 0.3 }); if (on) CORE.hint("THE MAILBOX", "Click the mailbox to get in touch"); };
+    const grp = new THREE.Group(); grp.position.set(x, y, z);
+    const blue = new THREE.MeshBasicMaterial({ color: "#4f86b0" }), dark = new THREE.MeshBasicMaterial({ color: "#2c3a44" });
+    this.nightKit.shade.push(blue, dark);
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.05, 0.1), dark); post.position.y = 0.52; grp.add(post);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.6), blue); body.position.y = 1.2; grp.add(body);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.6, 20, 1, false, 0, Math.PI), blue); top.rotation.set(Math.PI / 2, 0, Math.PI / 2); top.position.y = 1.35; grp.add(top);
+    const front = new THREE.Mesh(new THREE.CircleGeometry(0.21, 20, 0, Math.PI), dark); front.position.set(0, 1.35, 0.301); grp.add(front);
+    const frontLow = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.3), dark); frontLow.position.set(0, 1.2, 0.301); grp.add(frontLow);
+    const flagPivot = new THREE.Group(); flagPivot.position.set(0.23, 1.25, -0.1); grp.add(flagPivot);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.3, 0.08), new THREE.MeshBasicMaterial({ color: SK.PAL.coral })); flag.position.y = 0.15; flagPivot.add(flag);
+    grp.userData.onClick = () => { CORE.sound("open"); gsap.to(flagPivot.rotation, { x: -1.4, duration: 0.4 }); setTimeout(() => CORE.go("contact"), 350); };
+    grp.userData.onHover = (on) => { gsap.to(grp.scale, { x: on ? 1.08 : 1, y: on ? 1.08 : 1, z: on ? 1.08 : 1, duration: 0.3 }); gsap.to(flagPivot.rotation, { x: on ? -0.7 : 0, duration: 0.3 }); if (on) CORE.hint("THE MAILBOX", "Click the mailbox to get in touch"); };
     this.add(grp); this.interactives.push(grp);
   }
 

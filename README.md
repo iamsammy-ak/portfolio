@@ -61,7 +61,7 @@ Along the way you collect six achievements: *Explorer, Wanderer, Art Critic, Dir
 
 ## 🏡 Outside
 
-A modern house: charcoal cladding with a sprayed "HELLO", a cedar first floor cantilevered over the entrance, solar panels, a neon sign and the studio behind a glass wall. The garden has trees, grasses, lavender and path lights, with Turin on the hills behind, including the Mole Antonelliana and Superga.
+The original brick house, rebuilt from 3D parts. It has a tiled pitched roof with a chimney, stone corners, a plinth and a cornice, and a stone door surround with a step. The recessed windows have white frames, green shutters and coral curtains, and there's a flower box. The PORTFOLIO sign hangs on chains and sways. Bunting, the tree, the cat and Turin on the hills complete the street.
 
 - **Click the street lamp** to switch between day and night. Night brings a moon, stars and lit windows, and the choice is remembered.
 - **Click the mailbox** to go straight to Contact.
@@ -151,7 +151,7 @@ styles.css        UI layer: torn-paper sheets, map, modal, sticky-note hints
 data.js           ← all the content
 js/sketch.js      pencil-line drawing helpers (Pen) + three.js glue
 js/art.js         every drawing: planks, doors, posters, paintings, graffiti, avatar…
-js/art-house.js   the house, garden, Turin skyline, moon, stars, birds
+js/art-house.js   house materials, garden, Turin skyline, moon, stars, birds
 js/audio.js       generated music and sound effects
 js/core.js        renderer, virtual scroll, raycasting, transitions, HUD
 js/github.js      live repo list for the Lab (GitHub API + cache + snapshot)

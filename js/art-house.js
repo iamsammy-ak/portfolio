@@ -274,3 +274,80 @@
     mailboxFront, solarPanel, evCharger, moon, stars, birdPose, glow, metal,
   });
 })();
+
+/* ---------- the classic brick house, rebuilt from parts ---------- */
+(() => {
+  const { R, TAU, canvas, paper, Pen, PAL: C } = SK;
+  const pick = (a) => a[(Math.random() * a.length) | 0];
+
+  /* terracotta roof tiles in overlapping rows */
+  function roofTiles(w = 1024, h = 512) {
+    const k = canvas(w, h), g = k.g; g.fillStyle = "#8f4a2c"; g.fillRect(0, 0, w, h);
+    const p = new Pen(g, { width: 1.6, jitter: 0.5, passes: 1, ink: "#4a2414", alpha: 0.7 });
+    for (let y = 0, r = 0; y < h + 40; y += 40, r++) for (let x = (r % 2) * 32 - 32; x < w + 64; x += 64) {
+      const gr = g.createLinearGradient(0, y, 0, y + 44); const base = pick(["#c4673f", "#b85c37", "#cf7347", "#b0532f"]);
+      gr.addColorStop(0, base); gr.addColorStop(1, "#7d3a20"); g.fillStyle = gr;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + 62, y); g.quadraticCurveTo(x + 64, y + 30, x + 31, y + 44); g.quadraticCurveTo(x - 2, y + 30, x, y); g.fill();
+      p.stroke([[x, y], [x + 1, y + 28], [x + 31, y + 44], [x + 62, y + 28], [x + 62, y]], false);
+    }
+    return k;
+  }
+
+  /* pale limestone for sills, quoins and the door surround */
+  function stone(w = 256, h = 256) {
+    const k = canvas(w, h), g = k.g; paper(g, w, h, { base: "#e6dccb", grain: 0.09, smudges: 3 });
+    const p = new Pen(g, { width: 1.4, jitter: 0.6, passes: 1, ink: "#8c7f6a", alpha: 0.5 });
+    for (let i = 0; i < 6; i++) { const x = R(w), y = R(h); p.line(x, y, x + R(-30, 30), y + R(10, 40), { alpha: 0.2 }); }
+    return k;
+  }
+
+  /* green louvred shutter */
+  function shutter(w = 256, h = 640) {
+    const k = canvas(w, h), g = k.g, p = new Pen(g, { width: 2, jitter: 0.6, passes: 1, ink: "#16302a" });
+    g.fillStyle = C.tram; g.fillRect(0, 0, w, h);
+    p.rect(8, 8, w - 16, h - 16, { alpha: 0.6 });
+    for (let y = 30; y < h - 20; y += 22) { g.fillStyle = "rgba(255,255,255,0.12)"; g.fillRect(22, y, w - 44, 6); g.fillStyle = "rgba(0,0,0,0.22)"; g.fillRect(22, y + 7, w - 44, 4); }
+    return k;
+  }
+
+  /* what you see through the window glass (the frame itself is 3D) */
+  function windowGlass(night = false) {
+    const k = canvas(512, 512), g = k.g, p = new Pen(g, { width: 2, jitter: 0.8, passes: 1 });
+    const b = g.createLinearGradient(0, 0, 0, 512);
+    if (night) { b.addColorStop(0, "#ffd99a"); b.addColorStop(1, "#f0a65c"); } else { b.addColorStop(0, "#cfe3f1"); b.addColorStop(1, "#9fbfd6"); }
+    g.fillStyle = b; g.fillRect(0, 0, 512, 512);
+    // a glimpse of the room: shelf, lamp, plant
+    g.globalAlpha = night ? 0.85 : 0.35;
+    g.fillStyle = "#8a5a34"; g.fillRect(40, 300, 170, 12); g.fillRect(40, 380, 170, 12);
+    for (let i = 0; i < 7; i++) { g.fillStyle = pick([C.granata, C.po, C.ochre, C.teal]); g.fillRect(48 + i * 22, 250, 16, 50); }
+    g.fillStyle = C.leafDark; g.beginPath(); g.arc(120, 360, 22, 0, TAU); g.fill();
+    g.globalAlpha = 1;
+    // the coral curtain gathered on the right
+    p.stroke([[300, 0], [512, 0], [512, 512], [380, 512], [350, 300]], true, { fill: C.coralSoft, alpha: 0.9 });
+    for (let i = 0; i < 5; i++) p.curve([[318 + i * 34, 4], [334 + i * 32, 240], [350 + i * 30, 508]], false, { alpha: 0.25, width: 1.4 });
+    if (!night) { g.save(); g.globalAlpha = 0.5; g.fillStyle = "#fff"; [[60, 40], [150, 24]].forEach(([x, ww]) => { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + ww, 0); g.lineTo(x + ww - 160, 512); g.lineTo(x - 160, 512); g.fill(); }); g.restore(); }
+    return k;
+  }
+
+  /* just the yellow board of the hanging sign */
+  function signFace(text) {
+    const k = canvas(1024, 360), p = new Pen(k.g, { width: 3, jitter: 1 });
+    p.stroke([[12, 14], [1010, 8], [1014, 346], [8, 352]], true, { fill: C.sun });
+    p.stroke([[40, 40], [984, 34], [990, 320], [34, 326]], true, { alpha: 0.5, width: 1.6 });
+    for (let i = 0; i < 8; i++) p.curve([[50, 60 + i * 32], [512 + R(-80, 80), 64 + i * 32], [980, 58 + i * 32]], false, { alpha: 0.1, width: 1 });
+    p.text(text, 512, 186, { size: 150, outline: 10, outlineColor: "#2b2b2b", color: "#fffaf0", maxWidth: 880 });
+    p.text(text, 512, 186, { size: 150, color: "#2b2b2b", maxWidth: 880, alpha: 0.85 });
+    return k;
+  }
+
+  /* the flowers that sit in the window box (the box itself is 3D) */
+  function flowers(w = 768, h = 260) {
+    const k = canvas(w, h), p = new Pen(k.g, { width: 2, jitter: 1 });
+    const blooms = [C.coral, C.sun, C.lilac, C.coralSoft, C.peach, "#ffffff"];
+    for (let i = 0; i < 26; i++) { const x = R(30, w - 30), y = R(h * 0.35, h * 0.95); p.curve([[x, h], [x + R(-10, 10), (h + y) / 2], [x + R(-6, 6), y]], false, { width: 3, ink: C.leafDark, passes: 1 }); p.ellipse(x + R(-14, 14), y + R(0, 20), 16, 9, { fill: pick(["#6b985a", "#7fb06a", "#5f8f45"]), passes: 1, width: 1 }); }
+    for (let i = 0; i < 18; i++) { const x = R(40, w - 40), y = R(h * 0.2, h * 0.6), c = pick(blooms); for (let q = 0; q < 6; q++) { const a = (q / 6) * TAU; p.ellipse(x + Math.cos(a) * 13, y + Math.sin(a) * 11, 11, 14, { fill: c, passes: 1, width: 1 }); } p.circle(x, y, 7, { fill: C.sunDeep, passes: 1, width: 1 }); }
+    return k;
+  }
+
+  Object.assign(window.ART, { roofTiles, stone, shutter, windowGlass, signFace, flowers });
+})();
