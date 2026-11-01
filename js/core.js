@@ -310,8 +310,13 @@ window.CORE = (() => {
     panel.querySelectorAll("[data-night]").forEach((b) => b.addEventListener("click", () => setNight(b.dataset.night === "1")));
     const now = () => ($("#soundNow").textContent = AUDIO.title);
     AUDIO.onChange(now); now();
-    $("#btnAudio").addEventListener("click", () => { panel.classList.toggle("is-on"); sound("click"); });
-    $("#soundClose").addEventListener("click", () => panel.classList.remove("is-on"));
+    // the panel is [hidden] until opened, so it can never sit on screen unstyled
+    const show = (on) => {
+      if (on) { panel.hidden = false; requestAnimationFrame(() => panel.classList.add("is-on")); }
+      else { panel.classList.remove("is-on"); setTimeout(() => { if (!panel.classList.contains("is-on")) panel.hidden = true; }, 350); }
+    };
+    $("#btnAudio").addEventListener("click", () => { show(panel.hidden || !panel.classList.contains("is-on")); sound("click"); });
+    $("#soundClose").addEventListener("click", () => show(false));
   }
 
   /* upload textures and compile shaders while the paper still covers the screen */
@@ -427,7 +432,7 @@ window.CORE = (() => {
       if (k === "a" || k === "d") app.current?.onArrow?.(k === "a" ? -1 : 1);
       if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.target.closest?.("[role=tablist]")) { const d = e.key === "ArrowLeft" ? -1 : 1; if (app.current?.onArrow) app.current.onArrow(d); else app.scroll.target += d * 160; }
       if (e.key === "Enter" && app.current?.hovered?.userData.onClick) app.current.hovered.userData.onClick();
-      if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); $("#soundPanel").classList.remove("is-on"); }
+      if (e.key === "Escape") { closeModal(); closeMap(); $("#ach").classList.remove("is-on"); const sp = $("#soundPanel"); sp.classList.remove("is-on"); setTimeout(() => (sp.hidden = true), 350); }
     });
     addEventListener("resize", () => {
       app.w = innerWidth; app.h = innerHeight;
