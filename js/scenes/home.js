@@ -334,6 +334,9 @@ SCENES.home = class extends CORE.BaseScene {
     const titleM = plane(T.title(D.meta.short, D.meta.title), 4.6); titleM.position.set(-0.55, 2.55, -7.6); this.add(titleM); this.fade.push(titleM);
     this.avatar = T.avatarRig(1.05); this.avatar.position.set(1.55, 1.05, -6.6); this.add(this.avatar);
     this.avatar.userData.parts.forEach((m) => { m.userData.fz = -6.6; this.fade.push(m); });
+    // Abhishek in 3D (made on Higgsfield), waving hello; the drawing stands in until it has loaded
+    this.me3d = AVATAR3D.create(1.78); this.me3d.position.set(1.55, 0, -6.6); this.me3d.rotation.y = -0.3; this.add(this.me3d);
+    this.me3d.addEventListener("loaded", () => { this.avatar.visible = false; });
     flo(T.planeSketch(), 0.95, -2.0, 3.0, -5.6, { rz: 0.3, amp: 0.1 });
     flo(T.paperBall(), 0.45, -1.9, 0.25, -5, { amp: 0.0 });
     flo(T.pencil(), 0.9, 1.6, 0.14, -5.2, { rz: 0.5, amp: 0.0 });
@@ -644,6 +647,7 @@ SCENES.home = class extends CORE.BaseScene {
     const turned = smooth(0.35, 0.9, Math.abs(Math.sin(this.yaw.v)));
     this.fade.forEach((m) => { const d = (m.userData.fz ?? m.position.z) - z; m.material.opacity = (1 - smooth(-1.0, 0.4, d)) * (1 - turned * 0.92); });
     this.avatar.userData.tick(t);
+    if (z > -16) this.me3d.userData.tick(dt, cam.position);
     this.floaters.forEach((m) => { const b = m.userData.base; m.position.y = b[1] + Math.sin(t * 1.4 + m.userData.ph) * m.userData.amp; if (m.userData.spin) m.rotation.z += dt * m.userData.spin; });
     this.arrows.forEach((a) => { if (a.visible) a.position.z = a.userData.base[2] + Math.sin(t * 5) * 0.05 * (a.scale.x); });
   }

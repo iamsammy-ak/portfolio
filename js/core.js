@@ -506,6 +506,7 @@ window.CORE = (() => {
     document.body.classList.toggle("is-night", app.night);
     document.querySelectorAll("#soundPanel [data-night]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.night === (app.night ? "1" : "0"))));
     GH.refresh();
+    AVATAR3D.load().catch(() => {});
     const want = location.hash.slice(1);
     await TEAR.load(async () => {
       await document.fonts.ready;
