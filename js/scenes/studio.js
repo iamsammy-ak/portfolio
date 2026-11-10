@@ -23,7 +23,7 @@ SCENES.studio = class extends CORE.BaseScene {
     const av = plane(T.avatar(false), 1.1); av.position.set(0, -0.2, 0); this.cluster.add(av);
     // the 3D model waves from the middle of the screens and turns with them
     AVATAR3D.lights(this.scene);
-    this.me3d = AVATAR3D.create(1.9); this.me3d.position.set(0, -1.15, 0); this.cluster.add(this.me3d);
+    this.me3d = AVATAR3D.create(2.6); this.me3d.position.set(0, -1.6, 0); this.cluster.add(this.me3d);
     this.me3d.addEventListener("loaded", () => { av.visible = false; });
     const glyphs = ["</>", "{ }", "∑", "0101", "SQL", "β", "Δ", "✎", "⌘", "λ", "π", "∞"];
     const ring = new THREE.Group(); this.cluster.add(ring); this.ring = ring;
